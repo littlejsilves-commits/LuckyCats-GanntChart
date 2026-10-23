@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Robotics Season Planner</title>
+<link rel="icon" id="favicon" href="favicon.png">
+<link rel="apple-touch-icon" id="touchIcon" href="favicon.png">
 <style>
 :root{
   --bg:#f5f5f7; --surface:#ffffff; --glass:rgba(255,255,255,.78); --field:#f2f2f7;
@@ -865,6 +867,10 @@ function renderTop() {
   const logo = $('#logoBtn');
   logo.classList.toggle('img', !!S.team.logo);
   logo.innerHTML = S.team.logo ? `<img src="${S.team.logo}" alt="Team logo">` : DEFAULT_LOGO;
+  // Browser tab / bookmark icon follows the team logo.
+  if (S.team.logo && $('#favicon').getAttribute('href') !== S.team.logo) {
+    $('#favicon').href = $('#touchIcon').href = S.team.logo;
+  }
 }
 const SLIDES_ICON = `<svg viewBox="0 0 16 16"><path d="M3.5 1h6.3L13 4.2v9.6a1.2 1.2 0 0 1-1.2 1.2H3.5a1.2 1.2 0 0 1-1.2-1.2V2.2A1.2 1.2 0 0 1 3.5 1z" fill="#F4B400"/><path d="M9.8 1v2.4c0 .5.3.8.8.8H13z" fill="#F8D57E"/><rect x="4.6" y="7" width="6.2" height="4.4" rx=".5" fill="none" stroke="#fff" stroke-width="1.2"/></svg>`;
 const DEFAULT_LOGO = `<svg width="26" height="26" viewBox="0 0 26 26" fill="none">
