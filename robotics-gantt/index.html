@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Robotics Season Planner</title>
+<style>
+:root{
+  --bg:#f5f5f7; --surface:#ffffff; --glass:rgba(255,255,255,.78); --field:#f2f2f7;
+  --text:#1d1d1f; --sec:#515154; --muted:#86868b;
+  --line:rgba(0,0,0,.055); --line2:rgba(0,0,0,.1);
+  --accent:#0071e3; --red:#ff3b30; --orange:#ff9500; --green:#34c759;
+  --weekend:rgba(0,0,0,.022); --hover:rgba(0,113,227,.045);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 24px rgba(0,0,0,.06);
+  --shadow-lg:0 30px 80px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.08);
+  --label:280px;
+  color-scheme:light;
+}
+[data-theme=dark]{
+  --bg:#000; --surface:#161618; --glass:rgba(22,22,24,.8); --field:#2c2c2e;
+  --text:#f5f5f7; --sec:#c7c7cc; --muted:#8e8e93;
+  --line:rgba(255,255,255,.06); --line2:rgba(255,255,255,.12);
+  --accent:#0a84ff; --red:#ff453a;
+  --weekend:rgba(255,255,255,.025); --hover:rgba(10,132,255,.08);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 24px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; color:var(--text); background:var(--bg);
+  background-image:
+    radial-gradient(1100px 520px at 0% -10%, rgba(0,122,255,.10), transparent 60%),
+    radial-gradient(900px 480px at 100% -5%, rgba(175,82,222,.10), transparent 60%),
+    radial-gradient(700px 400px at 50% 110%, rgba(255,45,85,.06), transparent 60%);
+  background-attachment:fixed;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{display:block}
+
+/* ---------- Top bar ---------- */
+.topbar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:16px 24px 10px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;margin-right:auto}
+.logo{width:44px;height:44px;border-radius:12px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,#007AFF 0%,#5856D6 45%,#AF52DE 70%,#FF2D55 100%);
+  box-shadow:0 6px 18px rgba(88,86,214,.35), inset 0 1px 0 rgba(255,255,255,.35)}
+.brand h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1;white-space:nowrap}
+.subtitle{color:var(--muted);font-size:12.5px;font-weight:500;margin-top:2px;white-space:nowrap}
+.subtitle b{color:var(--sec);font-weight:600}
+.controls,.actions,.nav{display:flex;align-items:center;gap:8px}
+.controls{gap:12px}
+.btn{border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:980px;padding:7px 15px;font-weight:550;font-size:13px;white-space:nowrap;transition:transform .12s, background .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(0,113,227,.35)}
+.btn.danger{color:var(--red)}
+.btn.ghost{background:var(--field);box-shadow:none}
+.icon-btn{border:0;background:var(--surface);box-shadow:var(--shadow);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--sec);transition:transform .12s}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn svg{width:16px;height:16px}
+.select{border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:980px;padding:7px 12px;font-size:13px;font-weight:550;appearance:none;-webkit-appearance:none;padding-right:26px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868b' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center}
+.seg{display:inline-flex;background:rgba(118,118,128,.12);padding:2px;border-radius:9px;gap:0}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font-size:12.5px;font-weight:550;color:var(--sec);transition:background .2s,box-shadow .2s}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04)}
+[data-theme=dark] .seg button.on{background:#636366}
+
+/* ---------- Sub bar ---------- */
+.subbar{display:flex;align-items:stretch;gap:16px;flex-wrap:wrap;padding:6px 24px 14px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-right:auto}
+.stat{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:9px 14px 10px;min-width:104px;position:relative}
+.stat .k{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.04em}
+.stat .k i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.stat .v{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:2px}
+.stat .v small{font-size:12px;color:var(--muted);font-weight:600;margin-left:2px}
+.stat .meter{height:4px;border-radius:2px;background:var(--line2);margin-top:5px;overflow:hidden}
+.stat .meter i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#34C759,#00C7BE)}
+.stat.wide{min-width:170px;max-width:240px}
+.stat.wide .v{font-size:14px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.stat.wide .v small{display:block;margin:0}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.search{display:flex;align-items:center;gap:6px;background:var(--surface);box-shadow:var(--shadow);border-radius:10px;padding:0 10px;height:32px}
+.search svg{width:14px;height:14px;color:var(--muted)}
+.search input{border:0;outline:0;background:transparent;width:150px;font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;max-width:560px}
+.chip{border:0;display:flex;align-items:center;gap:6px;background:var(--surface);box-shadow:var(--shadow);border-radius:980px;padding:5px 11px 5px 7px;font-size:12px;font-weight:600;transition:opacity .2s}
+.chip i{width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4)}
+.chip.off{opacity:.4}
+.chip.off i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c)}
+
+/* iOS switch */
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:550;color:var(--sec);cursor:pointer;user-select:none}
+.toggle input{display:none}
+.toggle span{width:38px;height:23px;border-radius:12px;background:rgba(120,120,128,.24);position:relative;transition:background .25s;flex:none}
+.toggle span::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.toggle input:checked+span{background:var(--green)}
+.toggle input:checked+span::after{transform:translateX(15px)}
+
+/* ---------- Board ---------- */
+.board{flex:1;min-height:0;padding:0 24px 10px}
+.card{height:100%;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;border:.5px solid var(--line2)}
+.scroller{height:100%;overflow:auto;position:relative;overscroll-behavior:contain}
+.scroller::-webkit-scrollbar{height:10px;width:10px}
+.scroller::-webkit-scrollbar-thumb{background:rgba(120,120,128,.35);border-radius:10px;border:2px solid var(--surface)}
+.scroller::-webkit-scrollbar-track{background:transparent}
+
+.head{position:sticky;top:0;z-index:5;display:flex;height:58px;background:var(--glass);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line2)}
+.corner{position:sticky;left:0;z-index:6;width:var(--label);flex:none;background:var(--surface);border-right:1px solid var(--line2);display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 9px 18px}
+.corner .ct{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.corner .cc{font-size:11px;color:var(--muted);font-weight:500}
+.tiers{position:relative;flex:none;height:100%}
+.mcell{position:absolute;top:0;height:31px;display:flex;align-items:center;padding-left:10px;border-left:1px solid var(--line2);font-size:13px;white-space:nowrap;overflow:hidden}
+.mcell:first-child{border-left:0}
+.mcell b{font-weight:650;letter-spacing:-.01em}
+.mcell span{color:var(--muted);font-weight:500;margin-left:5px}
+.dcell{position:absolute;top:31px;height:27px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;line-height:1.05;color:var(--sec);font-weight:600}
+.dcell i{font-style:normal;font-size:8.5px;color:var(--muted);font-weight:600}
+.dcell.we{color:var(--muted)}
+.dcell.now b{background:var(--red);color:#fff;border-radius:5px;padding:1px 4px}
+.wcell{position:absolute;top:31px;height:27px;font-size:10.5px;color:var(--muted);font-weight:600;padding-left:5px;line-height:27px;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden}
+.tpill{position:absolute;top:36px;transform:translateX(-50%);background:var(--red);color:#fff;font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:6px;z-index:2;box-shadow:0 2px 6px rgba(255,59,48,.4)}
+
+.body{position:relative}
+.grid{position:absolute;top:0;bottom:0;z-index:0;pointer-events:none}
+.wk{position:absolute;top:0;bottom:0;background:var(--weekend)}
+.mline{position:absolute;top:0;bottom:0;width:1px;background:var(--line2)}
+.today{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--red);z-index:2;pointer-events:none;opacity:.9}
+.today::before{content:"";position:absolute;top:-1px;left:-3px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+
+.row{display:flex;position:relative}
+.row .label{position:sticky;left:0;z-index:3;width:var(--label);flex:none;background:var(--surface);border-right:1px solid var(--line2);display:flex;align-items:center;gap:10px;padding:0 14px 0 18px;min-width:0}
+.row .track{flex:1;position:relative;overflow-x:clip}
+.row.task{height:40px}
+.row.task .label{padding-left:30px;cursor:pointer}
+.mode-none .row.task .label{padding-left:18px}
+.row.task:hover .label,.row.task:hover .track{background:var(--hover)}
+.row.task .label::before{content:"";position:absolute;left:18px;top:9px;bottom:9px;width:3px;border-radius:2px;background:var(--c);opacity:.85}
+.mode-none .row.task .label::before{left:8px}
+.row + .row.group{border-top:1px solid var(--line2)}
+.row.group{height:58px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 7%,transparent),color-mix(in srgb,var(--c) 2%,transparent))}
+.row.group .label{cursor:pointer;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 9%,var(--surface)),color-mix(in srgb,var(--c) 4%,var(--surface)))}
+.chev{width:16px;height:16px;color:var(--muted);transition:transform .25s;flex:none;margin-left:-6px}
+.row.group.collapsed .chev{transform:rotate(-90deg)}
+.avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:12.5px;letter-spacing:.02em;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--c) 70%,white),var(--c));box-shadow:0 3px 10px color-mix(in srgb,var(--c) 40%,transparent), inset 0 1px 0 rgba(255,255,255,.35)}
+.avatar.sq{border-radius:10px}
+.gtext{min-width:0;flex:1}
+.gname{font-weight:650;font-size:14px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gsub{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gsub .red{color:var(--red);font-weight:600}
+.ring{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line2) 0)}
+.ring em{width:24px;height:24px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-style:normal;font-size:8.5px;font-weight:700;color:var(--sec)}
+.add{border:0;width:26px;height:26px;border-radius:50%;flex:none;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);font-size:17px;font-weight:600;line-height:1;display:grid;place-items:center;opacity:.0;transition:opacity .2s, transform .12s}
+.row.group:hover .add{opacity:1}
+.add:active{transform:scale(.9)}
+.sum{position:absolute;top:25px;height:8px;border-radius:4px;background:color-mix(in srgb,var(--c) 22%,transparent);overflow:hidden}
+.sum i{display:block;height:100%;background:var(--c);border-radius:4px;opacity:.75}
+
+.ttext{min-width:0;flex:1}
+.tname{font-size:13px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.005em}
+.tmeta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tmeta .red{color:var(--red);font-weight:600}
+.sdot{width:9px;height:9px;border-radius:50%;flex:none}
+.sdot.todo{box-shadow:inset 0 0 0 1.6px var(--muted)}
+.sdot.progress{background:#007AFF}
+.sdot.blocked{background:var(--red)}
+.sdot.done{background:var(--green)}
+.pri{font-size:9.5px;font-weight:800;color:var(--red);flex:none;letter-spacing:.03em}
+
+/* bars */
+.bar{position:absolute;top:7px;height:26px;border-radius:8px;color:var(--fg);display:flex;align-items:center;gap:5px;padding:0 9px;font-size:12px;font-weight:600;white-space:nowrap;user-select:none;-webkit-user-select:none;cursor:grab;touch-action:none;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 82%,white),var(--c));
+  box-shadow:0 1px 2px rgba(0,0,0,.12),0 4px 12px color-mix(in srgb,var(--c) 32%,transparent),inset 0 1px 0 rgba(255,255,255,.25);
+  transition:box-shadow .2s, filter .2s}
+.bar:hover{filter:brightness(1.04) saturate(1.05);box-shadow:0 2px 4px rgba(0,0,0,.14),0 8px 22px color-mix(in srgb,var(--c) 45%,transparent)}
+.bar.dragging{cursor:grabbing;z-index:4;filter:brightness(1.06)}
+.bar .bl{overflow:hidden;text-overflow:ellipsis;min-width:0;text-shadow:0 1px 1px rgba(0,0,0,.08)}
+.bar .pct{margin-left:auto;font-size:10.5px;opacity:.85;font-variant-numeric:tabular-nums}
+.bar .ck{width:12px;height:12px;flex:none}
+.bar .prog{position:absolute;left:6px;right:6px;bottom:3px;height:2.5px;border-radius:2px;background:color-mix(in srgb,currentColor 28%,transparent);overflow:hidden;pointer-events:none}
+.bar .prog i{display:block;height:100%;background:currentColor;border-radius:2px;opacity:.95}
+.bar .h{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:1}
+.bar .h.l{left:-3px}.bar .h.r{right:-3px}
+.bar .h::after{content:"";position:absolute;top:8px;bottom:8px;left:4px;width:2px;border-radius:1px;background:currentColor;opacity:0;transition:opacity .15s}
+.bar:hover .h::after{opacity:.55}
+.bar.outside{padding:0}
+.bar.outside .bl{position:absolute;left:calc(100% + 8px);color:var(--text);font-weight:550;text-shadow:none;overflow:visible}
+.bar.outside .ck,.bar.outside .pct{display:none}
+.bar.st-blocked::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:repeating-linear-gradient(-45deg,rgba(255,255,255,.28) 0 5px,transparent 5px 11px)}
+.bar.st-done{opacity:.55}
+.bar.over{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--red),0 4px 12px rgba(255,59,48,.3)}
+.bar .flag{position:absolute;right:-7px;top:-7px;width:15px;height:15px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface);z-index:2}
+.bar.ms{width:22px;padding:0;background:none;box-shadow:none;top:9px;height:22px}
+.bar.ms::before{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:4px;transform:rotate(45deg);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--c) 70%,white),var(--c));box-shadow:0 3px 10px color-mix(in srgb,var(--c) 50%,transparent),0 0 0 2px var(--surface)}
+.bar.ms .bl{position:absolute;left:28px;color:var(--text);font-weight:650;text-shadow:none;overflow:visible}
+.bar.ms.over::before{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--red)}
+.bar.ms.st-done{opacity:.6}
+
+.empty-row{height:40px;display:flex}
+.empty-row .label{color:var(--muted);font-size:12px;font-style:italic;padding-left:30px}
+.is-empty .grid,.is-empty .today,.is-empty .compline{display:none}
+.empty{padding:70px 20px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--text);margin:0 0 6px;font-size:18px;letter-spacing:-.01em}
+
+/* ---------- Legend ---------- */
+.legend{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:4px 28px 14px;font-size:11.5px;color:var(--muted);font-weight:500}
+.legend .lg{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.legend .sw{width:22px;height:10px;border-radius:4px;background:linear-gradient(180deg,#5aa8ff,#007AFF)}
+.legend .sw.blk{background:repeating-linear-gradient(-45deg,rgba(255,255,255,.4) 0 3px,transparent 3px 7px),#8e8e93}
+.legend .sw.ovr{background:#8e8e93;box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px var(--red)}
+.legend .sw.dn{opacity:.5}
+.legend .dia{width:10px;height:10px;transform:rotate(45deg);border-radius:2px;background:#8e8e93}
+.legend .tl{width:2px;height:14px;background:var(--red);border-radius:1px}
+.legend .mdot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.legend .sep{width:1px;height:14px;background:var(--line2)}
+.legend .hint{margin-left:auto}
+kbd{font:600 10.5px -apple-system,sans-serif;background:var(--surface);box-shadow:var(--shadow);border-radius:5px;padding:1px 5px;color:var(--sec)}
+
+/* ---------- Tooltip / toast ---------- */
+#tip{position:fixed;z-index:100;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;
+  background:var(--glass);backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);
+  border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18),0 0 0 .5px var(--line2);padding:12px 14px;width:270px;font-size:12px}
+#tip.show{opacity:1;transform:none}
+#tip h4{margin:0 0 2px;font-size:14px;letter-spacing:-.01em}
+#tip .who{display:flex;align-items:center;gap:6px;color:var(--sec);font-weight:550;margin-bottom:8px}
+#tip .who i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+#tip dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
+#tip dt{color:var(--muted)}#tip dd{margin:0;font-weight:550;text-align:right}
+#tip .notes{margin-top:8px;padding-top:8px;border-top:1px solid var(--line2);color:var(--sec)}
+#tip .tbar{height:5px;border-radius:3px;background:var(--line2);margin:8px 0 2px;overflow:hidden}
+#tip .tbar i{display:block;height:100%;background:var(--c);border-radius:3px}
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;z-index:200;transition:all .3s cubic-bezier(.3,1.3,.5,1);
+  background:rgba(29,29,31,.92);color:#fff;padding:10px 18px;border-radius:980px;font-size:13px;font-weight:550;box-shadow:0 10px 30px rgba(0,0,0,.25);pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Dialogs ---------- */
+dialog{border:0;padding:0;border-radius:22px;background:var(--surface);color:var(--text);box-shadow:var(--shadow-lg);width:min(580px,94vw);max-height:90vh;overflow:hidden}
+dialog[open]{display:flex;flex-direction:column;animation:pop .28s cubic-bezier(.3,1.3,.5,1)}
+dialog::backdrop{background:rgba(0,0,0,.28);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+@keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+dialog form{display:flex;flex-direction:column;min-height:0;flex:1}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 6px}
+.dlg-head h2{margin:0;font-size:19px;letter-spacing:-.02em}
+.x{border:0;width:28px;height:28px;border-radius:50%;background:var(--field);color:var(--muted);font-size:16px;display:grid;place-items:center}
+.dlg-body{padding:10px 22px 16px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.dlg-foot{display:flex;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid var(--line2);background:color-mix(in srgb,var(--field) 40%,var(--surface))}
+.spacer{flex:1}
+.dlg-body label,.field{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--sec)}
+.flabel{display:flex;justify-content:space-between}
+.dlg-body input:not([type=checkbox]):not([type=range]),.dlg-body select,.dlg-body textarea{border:0;outline:0;background:var(--field);border-radius:10px;padding:9px 12px;font-size:14px;font-weight:450;color:var(--text);transition:box-shadow .2s;width:100%}
+.dlg-body input:focus,.dlg-body select:focus,.dlg-body textarea:focus{box-shadow:0 0 0 3.5px color-mix(in srgb,var(--accent) 35%,transparent)}
+.dlg-body textarea{resize:vertical;min-height:64px;font-family:inherit}
+.dlg-body input.big{font-size:20px;font-weight:650;letter-spacing:-.015em;padding:11px 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg.wide{display:flex}.seg.wide button{flex:1}
+.seg.wide button[data-v=todo].on{color:var(--muted)}
+.seg.wide button[data-v=progress].on{color:#007AFF}
+.seg.wide button[data-v=blocked].on{color:var(--red)}
+.seg.wide button[data-v=done].on{color:var(--green)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--field);border-radius:12px;padding:10px 12px}
+.switch-row b{display:block;font-size:13px;color:var(--text)}
+.switch-row small{font-size:11.5px;color:var(--muted);font-weight:500}
+.info{font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:10px;padding:8px 12px}
+.info b{color:var(--text)}
+
+.mrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px;border-radius:14px;background:var(--field)}
+.mrow .avatar{margin-top:2px}
+.mfields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mfields input{background:var(--surface)!important;padding:7px 10px!important;font-size:13px!important}
+.palette{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.pc{border:0;width:20px;height:20px;border-radius:50%;background:var(--s);padding:0;transition:transform .12s}
+.pc.on{box-shadow:0 0 0 2px var(--field),0 0 0 4px var(--s)}
+.pc:hover{transform:scale(1.12)}
+.mbtns{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.mbtns .tiny{border:0;background:var(--surface);border-radius:7px;width:26px;height:24px;font-size:12px;color:var(--sec);display:grid;place-items:center}
+.mbtns .tiny:disabled{opacity:.3;cursor:default}
+.mbtns .tiny.del{color:var(--red)}
+.mcount{font-size:10.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+.mem-add{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding-top:4px}
+.muted{color:var(--muted)}
+.set-group{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:color-mix(in srgb,var(--field) 55%,transparent)}
+.set-group h3{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.dlg-body .set-group input{background:var(--surface)}
+
+#exitShot{display:none}
+.logo{cursor:pointer;position:relative;overflow:hidden}
+.logo img{width:100%;height:100%;object-fit:contain;display:block}
+.logo.img{background:var(--surface);box-shadow:var(--shadow)}
+.logo:hover::after{content:"Edit";position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;letter-spacing:.03em}
+body.shot .logo:hover::after{display:none}
+.stat.comp{border:0;text-align:left;cursor:pointer;min-width:230px;color:#fff;font:inherit;
+  background:linear-gradient(135deg,#5856D6 0%,#AF52DE 55%,#FF2D55 100%);box-shadow:0 6px 20px rgba(175,82,222,.35);transition:transform .15s}
+.stat.comp:hover{transform:translateY(-1px)}
+.stat.comp:active{transform:scale(.98)}
+.stat.comp .k{color:rgba(255,255,255,.85)}
+.stat.comp .k i{background:#fff}
+.stat.comp .v small{color:rgba(255,255,255,.8)}
+.stat.comp .cl{font-size:12px;font-weight:600;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.stat.comp .pen{position:absolute;top:9px;right:10px;width:14px;height:14px;opacity:0;transition:opacity .2s}
+.stat.comp:hover .pen{opacity:.9}
+body.shot .stat.comp .pen{display:none}
+.compline{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed #AF52DE;z-index:2;pointer-events:none;margin-left:-1px}
+.cpill{position:absolute;top:36px;background:linear-gradient(135deg,#5856D6,#AF52DE);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.03em;padding:2px 7px;border-radius:6px;z-index:2;white-space:nowrap;box-shadow:0 2px 6px rgba(175,82,222,.4);transform:translateX(-50%)}
+.lnk{border:0;background:none;color:var(--accent);font-size:12px;font-weight:600;padding:0}
+.add-top{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:12px;border-radius:14px;background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.add-top.one{grid-template-columns:1fr auto}
+.big-count{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;background:linear-gradient(135deg,#5856D6,#AF52DE,#FF2D55);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- Screenshot mode ---------- */
+body.shot{overflow:auto;height:auto;display:block}
+body.shot .controls,body.shot .actions,body.shot .filters,body.shot .add,body.shot .chev,body.shot .legend .hint,body.shot .bar .h{display:none!important}
+body.shot .topbar{padding-top:26px}
+body.shot .board{padding-bottom:6px}
+body.shot .card{height:auto}
+body.shot .scroller{height:auto;overflow:visible}
+body.shot .head{position:static;backdrop-filter:none;background:var(--surface)}
+body.shot .corner,body.shot .row .label{position:static}
+body.shot .bar{cursor:default}
+body.shot .row.task:hover .label,body.shot .row.task:hover .track{background:transparent}
+body.shot #exitShot{display:block;position:fixed;top:12px;right:14px;z-index:300;border:0;border-radius:980px;padding:7px 14px;background:rgba(29,29,31,.85);color:#fff;font-size:12px;font-weight:600;opacity:0;transition:opacity .25s}
+body.shot #exitShot:hover{opacity:1}
+
+@media print{
+  @page{size:landscape;margin:8mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{overflow:visible;height:auto;display:block;background:var(--bg)}
+  .controls,.actions,.filters,.add,.chev,.legend .hint,#exitShot,#tip,#toast{display:none!important}
+  .card{height:auto;box-shadow:none}
+  .scroller{height:auto;overflow:visible}
+  .head{position:static}
+  .corner,.row .label{position:static}
+}
+@media (max-width:900px){ :root{--label:210px} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" id="logoBtn" title="Click to upload your team logo"></div>
+    <input type="file" id="logoFile" accept="image/*" hidden>
+    <div style="min-width:0">
+      <h1 id="teamName">Robotics Team</h1>
+      <div class="subtitle" id="subtitle"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="nav">
+      <button class="icon-btn" id="prevBtn" title="Scroll earlier (←)"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="btn" id="todayBtn" title="Jump to today (T)">Today</button>
+      <button class="icon-btn" id="nextBtn" title="Scroll later (→)"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <select class="select" id="monthJump" title="Jump to month"></select>
+    </div>
+    <div class="seg" id="zoomSeg" title="Zoom (1–4)">
+      <button data-v="day">Day</button><button data-v="week">Week</button><button data-v="month">Month</button><button data-v="fit">Season</button>
+    </div>
+    <div class="seg" id="groupSeg" title="Group rows by">
+      <button data-v="member">Members</button><button data-v="category">Subsystem</button><button data-v="none">Timeline</button>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="membersBtn">
+      <span style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><circle cx="6" cy="5" r="2.6"/><path d="M1 13.5c0-2.6 2.2-4.3 5-4.3s5 1.7 5 4.3v.5H1z"/><circle cx="11.6" cy="5.6" r="2" opacity=".55"/><path d="M12 9.4c1.8.2 3.2 1.6 3.2 3.6v1H12.4c0-1.8-.2-3.3-1.3-4.4.3-.1.6-.2.9-.2z" opacity=".55"/></svg>Team</span>
+    </button>
+    <button class="btn" id="subsBtn"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.6"/><rect x="9" y="1" width="6" height="6" rx="1.6" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.6" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.6"/></svg>Subsystems</span></button>
+    <button class="icon-btn" id="themeBtn" title="Toggle light / dark"></button>
+    <button class="icon-btn" id="shotBtn" title="Screenshot mode (S)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="4" width="13" height="9.5" rx="2.2"/><path d="M5.5 4l1-1.8h3L10.5 4"/><circle cx="8" cy="8.7" r="2.5"/></svg></button>
+    <button class="icon-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4" stroke-linecap="round"/></svg></button>
+    <button class="btn primary" id="newTaskBtn" title="New task (N)">+ New Task</button>
+  </div>
+</header>
+
+<section class="subbar">
+  <div class="stats" id="stats"></div>
+  <div class="filters">
+    <div class="search">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.8"/><path d="M10.6 10.6L14 14" stroke-linecap="round"/></svg>
+      <input id="search" placeholder="Search tasks" autocomplete="off">
+    </div>
+    <div class="chips" id="chips"></div>
+    <label class="toggle"><input type="checkbox" id="hideDone"><span></span>Hide done</label>
+  </div>
+</section>
+
+<main class="board"><div class="card"><div class="scroller" id="scroller"><div id="canvas"></div></div></div></main>
+<footer class="legend" id="legend"></footer>
+
+<button id="exitShot">Exit screenshot mode · Esc</button>
+<div id="tip"></div>
+<div id="toast"></div>
+
+<!-- Task dialog -->
+<dialog id="taskDlg">
+  <form id="taskForm">
+    <div class="dlg-head"><h2 id="taskDlgTitle">New Task</h2><button type="button" class="x" data-close>✕</button></div>
+    <div class="dlg-body">
+      <input id="fTitle" class="big" placeholder="What needs to get done?" required autocomplete="off">
+      <div class="grid2">
+        <label>Assigned to<select id="fMember"></select></label>
+        <div class="field"><span class="flabel">Subsystem<button type="button" class="lnk" id="fCatManage">Edit list</button></span><select id="fCat"></select></div>
+        <label id="startWrap">Start date<input type="date" id="fStart" required></label>
+        <label><span id="endLabel">Deadline</span><input type="date" id="fEnd" required></label>
+      </div>
+      <div class="info" id="fInfo"></div>
+      <div class="field"><span class="flabel">Status</span>
+        <div class="seg wide" id="fStatus"><button type="button" data-v="todo">Not started</button><button type="button" data-v="progress">In progress</button><button type="button" data-v="blocked">Blocked</button><button type="button" data-v="done">Done</button></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><span class="flabel">Priority</span>
+          <div class="seg wide" id="fPriority"><button type="button" data-v="low">Low</button><button type="button" data-v="med">Medium</button><button type="button" data-v="high">High</button></div>
+        </div>
+        <div class="field"><span class="flabel">Progress <b id="fPctOut">0%</b></span><input type="range" id="fProgress" min="0" max="100" step="5"></div>
+      </div>
+      <div class="switch-row">
+        <span><b>Milestone</b><small>Single-day event shown as a diamond — kickoff, competitions, hard deadlines</small></span>
+        <label class="toggle"><input type="checkbox" id="fMilestone"><span></span></label>
+      </div>
+      <label>Notes<textarea id="fNotes" rows="3" placeholder="Details, links, parts needed, blockers…"></textarea></label>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn ghost danger" id="fDelete">Delete</button>
+      <button type="button" class="btn ghost" id="fDup">Duplicate</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save Task</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Members dialog -->
+<dialog id="memDlg">
+  <div class="dlg-head"><h2>Team Members</h2><button type="button" class="x" data-close>✕</button></div>
+  <div class="dlg-body">
+    <form class="add-top" id="memAdd">
+      <input id="newName" placeholder="New member name" required autocomplete="off">
+      <input id="newRole" placeholder="Role (e.g. Programming Lead)" autocomplete="off">
+      <button class="btn primary" type="submit">+ Add</button>
+    </form>
+    <div id="memList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <div class="dlg-foot"><span class="muted" style="font-size:12px">Changes save automatically.</span><span class="spacer"></span><button class="btn primary" data-close>Done</button></div>
+</dialog>
+
+<!-- Settings dialog -->
+<dialog id="setDlg">
+  <div class="dlg-head"><h2>Settings</h2><button type="button" class="x" data-close>✕</button></div>
+  <div class="dlg-body">
+    <div class="set-group">
+      <h3>Team</h3>
+      <div class="grid2">
+        <label>Team name<input id="sName" autocomplete="off"></label>
+        <label>Season label<input id="sSeason" autocomplete="off"></label>
+      </div>
+    </div>
+    <div class="set-group">
+      <h3>Team logo</h3>
+      <div class="btn-row"><button class="btn ghost" id="sLogo" type="button">Upload image…</button><button class="btn ghost danger" id="sLogoRm" type="button">Remove logo</button></div>
+      <span class="muted" style="font-size:12px">Tip: you can also click the logo in the top-left corner. PNG with a transparent background looks best.</span>
+    </div>
+    <div class="set-group">
+      <h3>Season dates</h3>
+      <div class="grid2">
+        <label>Chart starts<input type="date" id="sStart"></label>
+        <label>Chart ends<input type="date" id="sEnd"></label>
+      </div>
+      <div class="btn-row"><button class="btn ghost" id="sResetRange" type="button">Reset to this month → start of summer</button></div>
+    </div>
+    <div class="set-group">
+      <h3>Appearance</h3>
+      <div class="seg wide" id="sTheme"><button data-v="light" type="button">Light</button><button data-v="dark" type="button">Dark</button><button data-v="auto" type="button">Automatic</button></div>
+    </div>
+    <div class="set-group">
+      <h3>Data</h3>
+      <div class="btn-row">
+        <button class="btn ghost" id="sExport" type="button">Export JSON</button>
+        <button class="btn ghost" id="sImport" type="button">Import JSON</button>
+        <button class="btn ghost" id="sPrint" type="button">Print / Save PDF</button>
+        <input type="file" id="sFile" accept="application/json,.json" hidden>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost danger" id="sClear" type="button">Start fresh (erase all)</button>
+      </div>
+      <span class="muted" style="font-size:12px">Everything is saved in this browser automatically. Export a JSON file to back up or share with teammates.</span>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="spacer"></span><button class="btn primary" data-close>Done</button></div>
+</dialog>
+
+<!-- Subsystems dialog -->
+<dialog id="subDlg">
+  <div class="dlg-head"><h2>Subsystems</h2><button type="button" class="x" data-close>✕</button></div>
+  <div class="dlg-body">
+    <form class="add-top one" id="subAdd">
+      <input id="newSub" placeholder="New subsystem (e.g. Pneumatics)" required autocomplete="off">
+      <button class="btn primary" type="submit">+ Add</button>
+    </form>
+    <div id="subList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <div class="dlg-foot"><span class="muted" style="font-size:12px">Renaming updates every task in that subsystem.</span><span class="spacer"></span><button class="btn primary" data-close>Done</button></div>
+</dialog>
+
+<!-- Competition dialog -->
+<dialog id="compDlg" style="width:min(440px,94vw)">
+  <form id="compForm">
+    <div class="dlg-head"><h2>Next Competition</h2><button type="button" class="x" data-close>✕</button></div>
+    <div class="dlg-body">
+      <div style="text-align:center;padding:6px 0 2px"><div class="big-count" id="cPreview">—</div><div class="muted" id="cPreviewSub" style="font-size:12.5px;font-weight:600;margin-top:4px"></div></div>
+      <label>Competition name<input id="cName" placeholder="e.g. Regional Championship" autocomplete="off"></label>
+      <label>Competition date<input type="date" id="cDate" required></label>
+      <div class="switch-row">
+        <span><b>Show on chart</b><small>Dashed purple line on the timeline</small></span>
+        <label class="toggle"><input type="checkbox" id="cShow"><span></span></label>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn ghost danger" id="cClear">Clear</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+const KEY = 'robotics-gantt-v2', OLD_KEY = 'robotics-gantt-v1';
+const DAY = 864e5;
+const PALETTE = ['#007AFF','#5856D6','#AF52DE','#FF2D55','#FF3B30','#FF9500','#FFCC00','#34C759','#00C7BE','#30B0C7','#32ADE6','#A2845E'];
+const CAT_COLORS = {Mechanical:'#FF9500',Programming:'#AF52DE',Electrical:'#FFCC00',CAD:'#30B0C7',Build:'#A2845E',Strategy:'#5856D6',Business:'#34C759',Outreach:'#FF2D55',Leadership:'#007AFF',Training:'#32ADE6',Competition:'#FF3B30',General:'#8E8E93'};
+const STATUS = {todo:'Not started', progress:'In progress', blocked:'Blocked', done:'Done'};
+const PRI = {low:'Low', med:'Medium', high:'High'};
+const TEAM_COLOR = '#8E8E93';
+const DEFAULT_SUBS = ['Mechanical', 'Programming', 'Electrical', 'CAD', 'Strategy', 'Business', 'Outreach'];
+
+/* ---------- date helpers (all dates are 'YYYY-MM-DD', math done in UTC) ---------- */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+const iso = t => { const d = new Date(t); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; };
+const addDays = (s, n) => iso(parse(s) + n * DAY);
+const diff = (a, b) => Math.round((parse(b) - parse(a)) / DAY);
+const fmt = (s, o = {month:'short', day:'numeric'}) => new Date(parse(s)).toLocaleDateString(undefined, {timeZone:'UTC', ...o});
+const fmtY = s => fmt(s, {month:'short', day:'numeric', year:'numeric'});
+const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const _n = new Date();
+const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+let TODAY = localToday();
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+function defaultRange() {
+  const y = _n.getFullYear(), m = _n.getMonth();
+  // Summer starts ~June 21 (solstice). "Next year" if we're already past June.
+  const ey = m >= 5 ? y + 1 : y;
+  return {start: `${y}-${pad(m + 1)}-01`, end: `${ey}-06-21`};
+}
+function textOn(hex) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 175 ? '#1d1d1f' : '#ffffff';
+}
+const initials = name => (name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+const catColor = c => S.subsystems.find(x => x.name === c)?.color || defaultCatColor(c);
+function defaultCatColor(c) {
+  if (CAT_COLORS[c]) return CAT_COLORS[c];
+  let h = 0; for (const ch of c) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
+/* ---------- state ---------- */
+function defaultUI() { return {zoom:'week', group:'member', theme:'auto', collapsed:{}, hidden:{}, hideDone:false}; }
+
+// Placeholder data from the first version — stripped out when migrating saved data.
+const OLD_SAMPLE_MEMBERS = new Set(["Maya Patel", "Jordan Lee", "Ethan Brooks", "Sam Rivera", "Priya Shah", "Zoe Kim"]);
+const OLD_SAMPLE_TASKS = new Set(["Fall Open House", "Season Kickoff", "Week 0 Scrimmage", "Competition #1", "Competition #2", "District Championship", "World Championship", "Season Banquet", "Recruit & onboard rookies", "Season budget & fundraising goals", "Kickoff game analysis & strategy", "Scouting app & match strategy", "Competition travel logistics", "Shop safety & tool training", "Off-season drivetrain refresh", "Intake & shooter prototypes", "Build competition robot", "Practice robot build", "Pit kit & spare parts", "Swerve module CAD library", "Robot CAD v1", "Robot CAD v2 + fab drawings", "Off-season redesign study", "Java & WPILib bootcamp", "Vision & AprilTag localization", "Simulation & auto path planning", "Autonomous routines", "Driver practice & controls tuning", "Rewire practice robot", "Battery testing & inventory", "Power & CAN layout plan", "Wire competition robot", "Sponsor outreach campaign", "Library STEM demo night", "Impact Award essay & video", "Website & social media", "Summer robotics camp"]);
+const seasonLabel = r => `${r.start.slice(0, 4)}–${r.end.slice(2, 4)} Season`;
+function blank() {
+  const r = defaultRange();
+  return normalize({team: {name: 'Robotics Team', season: seasonLabel(r)}, range: r, members: [], tasks: []});
+}
+const validData = d => d && Array.isArray(d.members) && Array.isArray(d.tasks);
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(KEY)); if (validData(d)) return normalize(d); } catch {}
+  try {
+    const d = JSON.parse(localStorage.getItem(OLD_KEY));
+    if (validData(d)) {
+      const ids = new Set(d.members.filter(m => OLD_SAMPLE_MEMBERS.has(m.name)).map(m => m.id));
+      d.members = d.members.filter(m => !ids.has(m.id));
+      d.tasks = d.tasks.filter(t => !OLD_SAMPLE_TASKS.has(t.title));
+      d.tasks.forEach(t => { if (ids.has(t.memberId)) t.memberId = ''; });
+      d.ui = {...(d.ui || {}), collapsed: {}, hidden: {}};
+      return normalize(d);
+    }
+  } catch {}
+  return null;
+}
+function normalize(s) {
+  const r = defaultRange();
+  s.team = {name: 'Robotics Team', season: '', ...(s.team || {})};
+  s.range = s.range && isDate(s.range.start) && isDate(s.range.end) ? s.range : r;
+  s.ui = {...defaultUI(), ...(s.ui || {})};
+  s.members = s.members.map(m => ({id: m.id || uid(), name: m.name || '', role: m.role || '', color: m.color || PALETTE[0]}));
+  s.tasks = s.tasks.filter(t => isDate(t.start) && isDate(t.end)).map(t => ({
+    id: t.id || uid(), title: t.title || 'Untitled', memberId: t.memberId || '', category: t.category || '',
+    start: t.start, end: t.end < t.start ? t.start : t.end, progress: Math.max(0, Math.min(100, +t.progress || 0)),
+    status: STATUS[t.status] ? t.status : 'todo', priority: PRI[t.priority] ? t.priority : 'med',
+    milestone: !!t.milestone, notes: t.notes || ''}));
+  const subs = (Array.isArray(s.subsystems) ? s.subsystems : DEFAULT_SUBS.map(name => ({name})))
+    .filter(x => x && String(x.name || '').trim())
+    .map(x => ({id: x.id || uid(), name: String(x.name).trim(), color: x.color || defaultCatColor(String(x.name).trim())}));
+  for (const t of s.tasks) if (t.category && !subs.some(x => x.name === t.category)) subs.push({id: uid(), name: t.category, color: defaultCatColor(t.category)});
+  s.subsystems = subs;
+  s.competition = {name: '', date: '', show: true, ...(s.competition || {})};
+  if (!isDate(s.competition.date)) s.competition.date = '';
+  return s;
+}
+let S = load() || blank();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); return true; }
+  catch { toast('Couldn’t save — browser storage is full'); return false; }
+}
+save();
+
+/* ---------- derived ---------- */
+const memberOf = t => S.members.find(m => m.id === t.memberId);
+const colorOf = t => memberOf(t)?.color || (t.category ? catColor(t.category) : TEAM_COLOR);
+const isOverdue = t => t.status !== 'done' && t.end < TODAY;
+const totalDays = () => diff(S.range.start, S.range.end) + 1;
+const avgProgress = ts => ts.length ? Math.round(ts.reduce((a, t) => a + (t.status === 'done' ? 100 : +t.progress), 0) / ts.length) : 0;
+
+/* ---------- elements ---------- */
+const scroller = $('#scroller'), canvas = $('#canvas'), tip = $('#tip');
+let dw = 16;           // pixels per day
+let search = '';
+let shotPrevZoom = null;
+const labelW = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label')) || 280;
+
+function computeDW() {
+  const z = S.ui.zoom;
+  if (z === 'fit') dw = Math.max(1.2, (scroller.clientWidth - labelW() - 2) / totalDays());
+  else dw = {day: 36, week: 15, month: 6}[z] || 15;
+}
+
+/* ---------- render ---------- */
+function render() {
+  applyTheme();
+  computeDW();
+  renderTop(); renderStats(); renderChips(); renderChart(); renderLegend();
+}
+
+function renderTop() {
+  $('#teamName').textContent = S.team.name || 'Robotics Team';
+  document.title = `${S.team.name || 'Robotics'} · Season Planner`;
+  $('#subtitle').innerHTML = `${S.team.season ? `<b>${esc(S.team.season)}</b> · ` : ''}${fmtY(S.range.start)} – ${fmtY(S.range.end)}`;
+  for (const b of document.querySelectorAll('#zoomSeg button')) b.classList.toggle('on', b.dataset.v === S.ui.zoom);
+  for (const b of document.querySelectorAll('#groupSeg button')) b.classList.toggle('on', b.dataset.v === S.ui.group);
+  $('#hideDone').checked = !!S.ui.hideDone;
+  // month jump
+  let opts = '<option value="" disabled selected>Jump to…</option>', cur = S.range.start.slice(0, 8) + '01';
+  while (cur <= S.range.end) {
+    const v = cur < S.range.start ? S.range.start : cur;
+    opts += `<option value="${v}">${fmt(cur, {month: 'long', year: 'numeric'})}</option>`;
+    const [y, m] = cur.split('-').map(Number);
+    cur = m === 12 ? `${y + 1}-01-01` : `${y}-${pad(m + 1)}-01`;
+  }
+  $('#monthJump').innerHTML = opts;
+  $('#themeBtn').innerHTML = document.documentElement.dataset.theme === 'dark'
+    ? '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M14.5 8H13M3 8H1.5M12.6 3.4l-1 1M4.4 11.6l-1 1M12.6 12.6l-1-1M4.4 4.4l-1-1"/></svg>'
+    : '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z"/></svg>';
+  const logo = $('#logoBtn');
+  logo.classList.toggle('img', !!S.team.logo);
+  logo.innerHTML = S.team.logo ? `<img src="${S.team.logo}" alt="Team logo">` : DEFAULT_LOGO;
+}
+const DEFAULT_LOGO = `<svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+  <line x1="13" y1="2.5" x2="13" y2="6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="13" cy="2.4" r="1.6" fill="#fff"/>
+  <rect x="4.5" y="6.5" width="17" height="13" rx="4.2" fill="#fff" fill-opacity=".95"/>
+  <circle cx="9.6" cy="12.6" r="2" fill="#5856D6"/><circle cx="16.4" cy="12.6" r="2" fill="#5856D6"/><rect x="10" y="16" width="6" height="1.6" rx=".8" fill="#AF52DE"/>
+  <rect x="2" y="10.5" width="2" height="5" rx="1" fill="#fff" fill-opacity=".85"/><rect x="22" y="10.5" width="2" height="5" rx="1" fill="#fff" fill-opacity=".85"/>
+  <rect x="8" y="20.5" width="10" height="3" rx="1.5" fill="#fff" fill-opacity=".7"/></svg>`;
+
+function renderStats() {
+  const ts = S.tasks, work = ts.filter(t => !t.milestone);
+  const done = ts.filter(t => t.status === 'done').length;
+  const avg = avgProgress(work);
+  const over = ts.filter(isOverdue).length;
+  const soon = ts.filter(t => t.status !== 'done' && t.end >= TODAY && diff(TODAY, t.end) <= 14).length;
+  const stat = (k, v, c, extra = '') => `<div class="stat" style="--c:${c}"><div class="k"><i></i>${k}</div><div class="v">${v}</div>${extra}</div>`;
+  $('#stats').innerHTML =
+    stat('Members', S.members.length, '#007AFF') +
+    stat('Tasks', `${done}<small>/ ${ts.length} done</small>`, '#5856D6') +
+    stat('Progress', `${avg}<small>%</small>`, '#34C759', `<div class="meter"><i style="width:${avg}%"></i></div>`) +
+    stat('Overdue', over, over ? '#FF3B30' : '#8E8E93') +
+    stat('Due ≤ 14 days', soon, '#FF9500') +
+    compCard();
+}
+function countdown() {
+  const c = S.competition;
+  if (!c.date) return {big: '—', sub: 'Click to set your next competition', n: null};
+  const n = diff(TODAY, c.date);
+  const when = fmt(c.date, {weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'});
+  if (n > 0) return {big: `${n}<small>${n === 1 ? 'day' : 'days'}</small>`, sub: `${esc(c.name || 'Competition')} · ${when}`, n};
+  if (n === 0) return {big: 'Today! 🏆', sub: `${esc(c.name || 'Competition')} · good luck!`, n};
+  return {big: 'Done ✓', sub: `${esc(c.name || 'Competition')} was ${plural(-n, 'day')} ago · click to set the next one`, n};
+}
+function compCard() {
+  const cd = countdown();
+  return `<button class="stat comp" id="compCard" title="Click to edit the competition">
+    <svg class="pen" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5l2.5 2.5L6 12.5l-3.2.7.7-3.2z"/></svg>
+    <div class="k"><i></i>Days until competition</div><div class="v">${cd.big}</div><div class="cl">${cd.sub}</div></button>`;
+}
+
+function renderChips() {
+  const hasTeam = S.tasks.some(t => !memberOf(t));
+  const list = [...(hasTeam ? [{id: '_team', name: 'Team-wide', color: TEAM_COLOR}] : []), ...S.members];
+  $('#chips').innerHTML = list.map(m => `<button class="chip${S.ui.hidden[m.id] ? ' off' : ''}" data-chip="${m.id}" style="--c:${m.color}" title="Show / hide (Alt-click to solo)"><i></i>${esc((m.name || 'Unnamed').split(' ')[0])}</button>`).join('');
+}
+
+function buildGroups() {
+  const q = search.toLowerCase().trim();
+  const vis = S.tasks.filter(t => {
+    if (S.ui.hideDone && t.status === 'done') return false;
+    if (S.ui.hidden[memberOf(t) ? t.memberId : '_team']) return false;
+    if (q) {
+      const hay = [t.title, t.category, t.notes, memberOf(t)?.name, STATUS[t.status]].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end) || a.title.localeCompare(b.title));
+
+  const G = [];
+  if (S.ui.group === 'member') {
+    const team = vis.filter(t => !memberOf(t));
+    if (team.length) G.push({key: '_team', header: true, title: 'Team-wide', sub: 'Milestones & shared work', color: TEAM_COLOR, memberId: '', avatar: '★', tasks: team});
+    for (const m of S.members) {
+      if (S.ui.hidden[m.id]) continue;
+      const ts = vis.filter(t => t.memberId === m.id);
+      if (q && !ts.length) continue;
+      G.push({key: m.id, header: true, title: m.name || 'Unnamed', sub: m.role, color: m.color, memberId: m.id, avatar: initials(m.name), tasks: ts});
+    }
+  } else if (S.ui.group === 'category') {
+    const order = c => { const i = S.subsystems.findIndex(x => x.name === c); return c === 'General' ? 1e9 : i < 0 ? 1e8 : i; };
+    const cats = [...new Set(vis.map(t => t.category || 'General'))].sort((a, b) => order(a) - order(b) || a.localeCompare(b));
+    for (const c of cats) G.push({key: 'c:' + c, header: true, title: c, sub: '', color: catColor(c), cat: c === 'General' ? '' : c, avatar: c[0].toUpperCase(), square: true, tasks: vis.filter(t => (t.category || 'General') === c)});
+  } else {
+    G.push({key: 'all', header: false, tasks: vis});
+  }
+  return G;
+}
+
+function barHTML(t) {
+  const a = diff(S.range.start, t.start), b = diff(S.range.start, t.end);
+  const c = colorOf(t), over = isOverdue(t);
+  const cls = `bar st-${t.status}${over ? ' over' : ''}`;
+  if (t.milestone) {
+    return `<div class="${cls} ms" data-id="${t.id}" style="left:${a * dw + dw / 2 - 11}px;--c:${c}"><span class="bl">${esc(t.title)}</span></div>`;
+  }
+  const left = a * dw, width = Math.max((b - a + 1) * dw, 8);
+  const need = t.title.length * 6.7 + 26 + (t.status === 'done' ? 16 : 0);
+  const out = width < need;
+  const showPct = !out && width > need + 40 && t.status !== 'done';
+  return `<div class="${cls}${out ? ' outside' : ''}" data-id="${t.id}" style="left:${left}px;width:${width}px;--c:${c};--fg:${textOn(c)}">` +
+    (t.status === 'done' ? '<svg class="ck" viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') +
+    `<span class="bl">${esc(t.title)}</span>${showPct ? `<span class="pct">${t.progress}%</span>` : ''}` +
+    `<span class="prog"><i style="width:${t.status === 'done' ? 100 : t.progress}%"></i></span>` +
+    `<span class="h l"></span><span class="h r"></span>${over ? '<span class="flag">!</span>' : ''}</div>`;
+}
+
+function taskRow(t) {
+  const m = memberOf(t), over = isOverdue(t);
+  const due = t.milestone ? fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric'}) : `Due ${fmt(t.end)}`;
+  const bits = [];
+  if (S.ui.group !== 'member') bits.push(esc(m?.name?.split(' ')[0] || 'Team'));
+  if (S.ui.group !== 'category' && t.category) bits.push(esc(t.category));
+  bits.push(over ? `<span class="red">${due} · ${plural(diff(t.end, TODAY), 'day')} late</span>` : due);
+  return `<div class="row task" style="--c:${colorOf(t)}">
+    <div class="label" data-open="${t.id}"><span class="sdot ${t.status}" title="${STATUS[t.status]}"></span>
+      <div class="ttext"><div class="tname">${t.milestone ? '◆ ' : ''}${esc(t.title)}</div><div class="tmeta">${bits.join(' · ')}</div></div>
+      ${t.priority === 'high' && t.status !== 'done' && !t.milestone ? '<span class="pri" title="High priority">HIGH</span>' : ''}</div>
+    <div class="track" data-member="${esc(t.memberId)}" data-cat="${esc(t.category)}">${barHTML(t)}</div></div>`;
+}
+
+function groupRow(g) {
+  const pct = avgProgress(g.tasks.filter(t => !t.milestone));
+  const over = g.tasks.filter(isOverdue).length;
+  let sum = '';
+  if (g.tasks.length) {
+    const a = Math.min(...g.tasks.map(t => diff(S.range.start, t.start)));
+    const b = Math.max(...g.tasks.map(t => diff(S.range.start, t.end)));
+    sum = `<div class="sum" style="left:${a * dw}px;width:${Math.max((b - a + 1) * dw, 6)}px"><i style="width:${pct}%"></i></div>`;
+  }
+  const sub = [g.sub && esc(g.sub), plural(g.tasks.length, 'task'), over ? `<span class="red">${over} overdue</span>` : ''].filter(Boolean).join(' · ');
+  return `<div class="row group${S.ui.collapsed[g.key] ? ' collapsed' : ''}" style="--c:${g.color}">
+    <div class="label" data-toggle="${esc(g.key)}">
+      <svg class="chev" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="avatar${g.square ? ' sq' : ''}">${esc(g.avatar)}</span>
+      <div class="gtext"><div class="gname">${esc(g.title)}</div><div class="gsub">${sub}</div></div>
+      ${g.tasks.some(t => !t.milestone) ? `<span class="ring" style="--p:${pct}" title="${pct}% complete"><em>${pct}%</em></span>` : ''}
+      <button class="add" data-add="1" data-member="${esc(g.memberId ?? '')}" data-cat="${esc(g.cat ?? '')}" title="Add task">+</button>
+    </div>
+    <div class="track" data-member="${esc(g.memberId ?? '')}" data-cat="${esc(g.cat ?? '')}">${sum}</div></div>`;
+}
+
+function renderChart() {
+  const total = totalDays(), W = Math.round(total * dw), L = labelW();
+  const wd0 = new Date(parse(S.range.start)).getUTCDay();
+  const showDays = dw >= 22;
+
+  // header tiers
+  let months = '', mlines = '', minor = '', weekends = '';
+  for (let i = 0, cur = S.range.start, first = true; i < total; first = false) {
+    const [y, m] = cur.split('-').map(Number);
+    const next = m === 12 ? `${y + 1}-01-01` : `${y}-${pad(m + 1)}-01`;
+    const j = Math.min(diff(S.range.start, next), total), w = (j - i) * dw;
+    const name = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(undefined, {month: w > 95 ? 'long' : w > 34 ? 'short' : 'narrow', timeZone: 'UTC'});
+    months += `<div class="mcell" style="left:${i * dw}px;width:${w}px"><b>${name}</b>${(first || m === 1) && w > 60 ? `<span>${y}</span>` : ''}</div>`;
+    if (i > 0) mlines += `<div class="mline" style="left:${i * dw}px"></div>`;
+    i = j; cur = next;
+  }
+  if (showDays) {
+    for (let k = 0; k < total; k++) {
+      const wd = (wd0 + k) % 7, d = addDays(S.range.start, k);
+      minor += `<div class="dcell${wd === 0 || wd === 6 ? ' we' : ''}${d === TODAY ? ' now' : ''}" style="left:${k * dw}px;width:${dw}px"><b>${+d.slice(8)}</b><i>${'SMTWTFS'[wd]}</i></div>`;
+    }
+  } else {
+    for (let k = 0; k < total;) {
+      const wd = (wd0 + k) % 7, len = Math.min(((8 - wd) % 7) || 7, total - k), w = len * dw;
+      minor += `<div class="wcell" style="left:${k * dw}px;width:${w}px">${w >= 20 ? +addDays(S.range.start, k).slice(8) : ''}</div>`;
+      k += len;
+    }
+  }
+  if (dw >= 7) {
+    for (let k = 0; k < total; k++) {
+      const wd = (wd0 + k) % 7;
+      if (wd === 6) weekends += `<div class="wk" style="left:${k * dw}px;width:${Math.min(2, total - k) * dw}px"></div>`;
+      else if (wd === 0 && k === 0) weekends += `<div class="wk" style="left:0;width:${dw}px"></div>`;
+    }
+  }
+  const firstMon = (8 - wd0) % 7;
+  const gridBg = `background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);background-size:${showDays ? dw : 7 * dw}px 100%;background-position:${showDays ? 0 : firstMon * dw}px 0`;
+  const tIdx = diff(S.range.start, TODAY), todayIn = tIdx >= 0 && tIdx < total;
+  const comp = S.competition, cIdx = comp.date ? diff(S.range.start, comp.date) : -1, compIn = comp.show && comp.date && cIdx >= 0 && cIdx < total;
+
+  // rows
+  const G = buildGroups();
+  let rows = '', count = 0;
+  for (const g of G) {
+    if (g.header) rows += groupRow(g);
+    if (g.header && S.ui.collapsed[g.key]) { count += g.tasks.length; continue; }
+    for (const t of g.tasks) { rows += taskRow(t); count++; }
+    if (g.header && !g.tasks.length) rows += `<div class="row empty-row"><div class="label">No tasks yet — click + or double-click the timeline</div><div class="track" data-member="${esc(g.memberId ?? '')}" data-cat="${esc(g.cat ?? '')}"></div></div>`;
+  }
+  const isEmpty = !G.length || !rows;
+  if (isEmpty) {
+    rows = `<div class="empty" style="width:${L + W}px;max-width:100vw;position:sticky;left:0"><h3>${S.members.length || search ? 'Nothing to show' : 'Build your team'}</h3>${
+      S.members.length || search ? 'Try clearing the search or showing hidden members.' : 'Add your team members, then start assigning tasks.<br><br><button class="btn primary" data-open-members>Add team members</button> <button class="btn" data-new-task>+ New Task</button>'}</div>`;
+  }
+
+  canvas.className = 'mode-' + S.ui.group;
+  canvas.innerHTML =
+    `<div class="head" style="width:${L + W}px">
+      <div class="corner"><span class="ct">${{member: 'Members & tasks', category: 'Subsystems', none: 'All tasks'}[S.ui.group]}</span><span class="cc">${plural(count, 'task')}</span></div>
+      <div class="tiers" style="width:${W}px">${months}${minor}${todayIn && !showDays ? `<div class="tpill" style="left:${(tIdx + .5) * dw}px">TODAY</div>` : ''}${compIn ? `<div class="cpill" style="left:${(cIdx + .5) * dw}px">🏆 ${esc(comp.name || 'Competition')}</div>` : ''}</div>
+    </div>
+    <div class="body${isEmpty ? ' is-empty' : ''}" style="width:${L + W}px">
+      <div class="grid" style="left:${L}px;width:${W}px;${gridBg}">${weekends}${mlines}</div>
+      ${todayIn ? `<div class="today" style="left:${L + (tIdx + .5) * dw}px"></div>` : ''}
+      ${compIn ? `<div class="compline" style="left:${L + (cIdx + .5) * dw}px"></div>` : ''}
+      ${rows}
+    </div>`;
+}
+
+function renderLegend() {
+  const ms = S.members.map(m => `<span class="lg"><span class="mdot" style="--c:${m.color}"></span>${esc(m.name)}${m.role ? ` <span style="opacity:.7">· ${esc(m.role)}</span>` : ''}</span>`).join('');
+  $('#legend').innerHTML = ms + (ms ? '<span class="sep"></span>' : '') +
+    `<span class="lg"><span class="sw"></span>Task</span>
+     <span class="lg"><span class="sw dn"></span>Done</span>
+     <span class="lg"><span class="sw blk"></span>Blocked</span>
+     <span class="lg"><span class="sw ovr"></span>Overdue</span>
+     <span class="lg"><span class="dia"></span>Milestone</span>
+     <span class="lg"><span class="tl"></span>Today</span>
+     ${S.competition.date && S.competition.show ? `<span class="lg"><span class="tl" style="background:none;border-left:2px dashed #AF52DE;width:0"></span>${esc(S.competition.name || 'Competition')}</span>` : ''}
+     <span class="lg hint">Drag bars to reschedule · drag edges to resize · <kbd>N</kbd> new · <kbd>T</kbd> today · <kbd>1</kbd>–<kbd>4</kbd> zoom · <kbd>S</kbd> screenshot · <kbd>C</kbd> competition</span>`;
+}
+
+/* ---------- theme ---------- */
+const mq = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() {
+  const dark = S.ui.theme === 'dark' || (S.ui.theme === 'auto' && mq.matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+}
+mq.addEventListener?.('change', () => S.ui.theme === 'auto' && render());
+
+/* ---------- navigation ---------- */
+const visibleW = () => scroller.clientWidth - labelW();
+function scrollToDate(d, frac = 0.12, smooth = true) {
+  const idx = Math.max(0, Math.min(totalDays() - 1, diff(S.range.start, d)));
+  scrollToX(idx * dw - visibleW() * frac, smooth);
+}
+// Own easing animation — native smooth scrolling stalls on this sticky/backdrop layout in some browsers.
+let scrollAnim = 0;
+function scrollToX(x, smooth = true) {
+  cancelAnimationFrame(scrollAnim);
+  const to = Math.max(0, Math.min(x, scroller.scrollWidth - scroller.clientWidth)), from = scroller.scrollLeft;
+  if (!smooth || Math.abs(to - from) < 2) { scroller.scrollLeft = to; return; }
+  const t0 = performance.now(), dur = Math.min(650, 250 + Math.abs(to - from) / 6);
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    scroller.scrollLeft = from + (to - from) * e;
+    if (k < 1) scrollAnim = requestAnimationFrame(step);
+  };
+  scrollAnim = requestAnimationFrame(step);
+}
+scroller.addEventListener('wheel', () => cancelAnimationFrame(scrollAnim), {passive: true});
+function setZoom(z) {
+  const center = (scroller.scrollLeft + visibleW() / 2) / dw;
+  S.ui.zoom = z; save(); render();
+  scroller.scrollLeft = center * dw - visibleW() / 2;
+}
+$('#zoomSeg').addEventListener('click', e => { const v = e.target.closest('button')?.dataset.v; if (v) setZoom(v); });
+$('#groupSeg').addEventListener('click', e => { const v = e.target.closest('button')?.dataset.v; if (v) { S.ui.group = v; save(); render(); } });
+$('#todayBtn').onclick = () => scrollToDate(TODAY);
+$('#prevBtn').onclick = () => scrollToX(scroller.scrollLeft - visibleW() * .8);
+$('#nextBtn').onclick = () => scrollToX(scroller.scrollLeft + visibleW() * .8);
+$('#monthJump').onchange = e => {
+  const v = e.target.value; if (!isDate(v)) return;
+  // In Season zoom everything already fits, so zoom in first so there's somewhere to scroll to.
+  if (S.ui.zoom === 'fit') { S.ui.zoom = 'week'; save(); render(); }
+  scrollToDate(v, 0);
+  $('#monthJump').selectedIndex = 0;
+};
+$('#newTaskBtn').onclick = () => openTask();
+$('#subsBtn').onclick = () => openSubs();
+$('#search').addEventListener('input', e => { search = e.target.value; renderChart(); });
+$('#hideDone').onchange = e => { S.ui.hideDone = e.target.checked; save(); renderChart(); };
+$('#chips').addEventListener('click', e => {
+  const id = e.target.closest('[data-chip]')?.dataset.chip; if (!id) return;
+  if (e.altKey) {
+    const ids = ['_team', ...S.members.map(m => m.id)];
+    const solo = ids.every(x => x === id ? !S.ui.hidden[x] : S.ui.hidden[x]);
+    S.ui.hidden = {}; if (!solo) for (const x of ids) if (x !== id) S.ui.hidden[x] = true;
+  } else S.ui.hidden[id] = !S.ui.hidden[id];
+  save(); renderChips(); renderChart();
+});
+$('#themeBtn').onclick = () => { S.ui.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; save(); render(); };
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => S.ui.zoom === 'fit' && render(), 80); });
+
+/* ---------- chart interactions ---------- */
+canvas.addEventListener('click', e => {
+  if (e.target.closest('[data-open-members]')) return openMembers();
+  if (e.target.closest('[data-new-task]')) return openTask();
+  const add = e.target.closest('[data-add]');
+  if (add) { e.stopPropagation(); return openTask(null, {memberId: add.dataset.member, category: add.dataset.cat}); }
+  const tg = e.target.closest('[data-toggle]');
+  if (tg) { const k = tg.dataset.toggle; S.ui.collapsed[k] = !S.ui.collapsed[k]; save(); renderChart(); return; }
+  const op = e.target.closest('[data-open]');
+  if (op) openTask(op.dataset.open);
+});
+canvas.addEventListener('dblclick', e => {
+  const tr = e.target.closest('.track');
+  if (!tr || e.target.closest('.bar') || document.body.classList.contains('shot')) return;
+  const idx = Math.floor((e.clientX - tr.getBoundingClientRect().left) / dw);
+  const start = addDays(S.range.start, Math.max(0, Math.min(totalDays() - 1, idx)));
+  openTask(null, {memberId: tr.dataset.member, category: tr.dataset.cat, start, end: addDays(start, 6) > S.range.end ? S.range.end : addDays(start, 6)});
+});
+
+// drag to move / resize
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  const bar = e.target.closest('.bar');
+  if (!bar || e.button !== 0 || document.body.classList.contains('shot')) return;
+  const t = S.tasks.find(x => x.id === bar.dataset.id); if (!t) return;
+  e.preventDefault();
+  const mode = t.milestone ? 'move' : e.target.classList.contains('l') ? 'l' : e.target.classList.contains('r') ? 'r' : 'move';
+  drag = {t, bar, mode, x0: e.clientX, s0: t.start, e0: t.end, moved: false};
+  bar.setPointerCapture(e.pointerId);
+  bar.classList.add('dragging');
+});
+addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x0;
+  if (Math.abs(dx) > 3) drag.moved = true;
+  if (!drag.moved) return;
+  const dd = Math.round(dx / dw), {t, s0, e0, bar} = drag;
+  if (drag.mode === 'move') { t.start = addDays(s0, dd); t.end = addDays(e0, dd); }
+  else if (drag.mode === 'l') { const s = addDays(s0, dd); t.start = s > e0 ? e0 : s; }
+  else { const en = addDays(e0, dd); t.end = en < s0 ? s0 : en; }
+  const a = diff(S.range.start, t.start), b = diff(S.range.start, t.end);
+  if (t.milestone) bar.style.left = `${a * dw + dw / 2 - 11}px`;
+  else { bar.style.left = `${a * dw}px`; bar.style.width = `${Math.max((b - a + 1) * dw, 8)}px`; }
+  showTip(t, e);
+});
+addEventListener('pointerup', () => {
+  if (!drag) return;
+  const {t, moved, bar} = drag; drag = null;
+  bar.classList.remove('dragging');
+  if (moved) { save(); render(); toast(t.milestone ? `${t.title} → ${fmtY(t.end)}` : `${t.title}: ${fmt(t.start)} – ${fmt(t.end)}`); }
+  else { hideTip(); openTask(t.id); }
+});
+
+/* ---------- tooltip ---------- */
+function showTip(t, e) {
+  const m = memberOf(t), len = diff(t.start, t.end) + 1;
+  const left = diff(TODAY, t.end);
+  const when = t.status === 'done' ? 'Complete ✓' : left < 0 ? `<span style="color:var(--red)">${plural(-left, 'day')} overdue</span>` : left === 0 ? 'Due today' : `${plural(left, 'day')} left`;
+  tip.style.setProperty('--c', colorOf(t));
+  tip.innerHTML = `<h4>${t.milestone ? '◆ ' : ''}${esc(t.title)}</h4>
+    <div class="who"><i></i>${esc(m?.name || 'Team-wide')}${m?.role ? ` · ${esc(m.role)}` : ''}</div>
+    <dl>${t.milestone ? `<dt>Date</dt><dd>${fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'})}</dd>`
+      : `<dt>Start</dt><dd>${fmt(t.start, {weekday: 'short', month: 'short', day: 'numeric'})}</dd><dt>Deadline</dt><dd>${fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric'})}</dd><dt>Duration</dt><dd>${plural(len, 'day')}</dd>`}
+      <dt>Status</dt><dd>${STATUS[t.status]}</dd><dt>Timing</dt><dd>${when}</dd>
+      ${t.category ? `<dt>Subsystem</dt><dd>${esc(t.category)}</dd>` : ''}<dt>Priority</dt><dd>${PRI[t.priority]}</dd></dl>
+    ${t.milestone ? '' : `<div class="tbar"><i style="width:${t.status === 'done' ? 100 : t.progress}%"></i></div><div style="text-align:right;color:var(--muted);font-weight:600">${t.status === 'done' ? 100 : t.progress}% complete</div>`}
+    ${t.notes ? `<div class="notes">${esc(t.notes)}</div>` : ''}`;
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 16, y = e.clientY + 16;
+  if (x + r.width > innerWidth - 10) x = e.clientX - r.width - 16;
+  if (y + r.height > innerHeight - 10) y = e.clientY - r.height - 16;
+  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+  tip.classList.add('show');
+}
+const hideTip = () => tip.classList.remove('show');
+canvas.addEventListener('mousemove', e => {
+  if (drag || document.body.classList.contains('shot')) return;
+  const bar = e.target.closest('.bar');
+  const t = bar && S.tasks.find(x => x.id === bar.dataset.id);
+  t ? showTip(t, e) : hideTip();
+});
+canvas.addEventListener('mouseleave', () => !drag && hideTip());
+scroller.addEventListener('scroll', () => !drag && hideTip(), {passive: true});
+
+let toastT;
+function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2200); }
+
+/* ---------- task dialog ---------- */
+const taskDlg = $('#taskDlg');
+let editing = null;
+const segVal = id => document.querySelector(`#${id} button.on`)?.dataset.v;
+const setSeg = (id, v) => document.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('on', b.dataset.v === v));
+for (const id of ['fStatus', 'fPriority', 'sTheme']) {
+  $('#' + id).addEventListener('click', e => {
+    const v = e.target.closest('button')?.dataset.v; if (!v) return;
+    setSeg(id, v);
+    if (id === 'fStatus') { if (v === 'done') $('#fProgress').value = 100; else if (+$('#fProgress').value === 100) $('#fProgress').value = 90; if (v === 'progress' && +$('#fProgress').value === 0) $('#fProgress').value = 10; updatePct(); }
+    if (id === 'sTheme') { S.ui.theme = v; save(); render(); }
+  });
+}
+function updatePct() { $('#fPctOut').textContent = $('#fProgress').value + '%'; }
+$('#fProgress').addEventListener('input', () => {
+  const p = +$('#fProgress').value; updatePct();
+  if (p === 100) setSeg('fStatus', 'done');
+  else if (segVal('fStatus') === 'done' || (p > 0 && segVal('fStatus') === 'todo')) setSeg('fStatus', 'progress');
+});
+function updateInfo() {
+  const ms = $('#fMilestone').checked, s = $('#fStart').value, en = $('#fEnd').value;
+  $('#startWrap').style.display = ms ? 'none' : '';
+  $('#endLabel').textContent = ms ? 'Date' : 'Deadline';
+  if (!isDate(en) || (!ms && !isDate(s))) { $('#fInfo').innerHTML = 'Pick dates to see the schedule.'; return; }
+  const left = diff(TODAY, en), len = ms ? 1 : diff(s, en) + 1;
+  const rel = left < 0 ? `was <b>${plural(-left, 'day')} ago</b>` : left === 0 ? 'is <b>today</b>' : `is in <b>${plural(left, 'day')}</b>`;
+  $('#fInfo').innerHTML = ms ? `Milestone on <b>${fmt(en, {weekday: 'long', month: 'long', day: 'numeric'})}</b> — ${rel.replace(/^is |^was /, '')}.`
+    : (len < 1 ? '<span style="color:var(--red)">Deadline is before the start date.</span>'
+      : `<b>${plural(len, 'day')}</b> (${(len / 7).toFixed(1)} weeks) · deadline ${rel} · ${fmt(en, {weekday: 'long'})}`);
+}
+['fStart', 'fEnd'].forEach(id => $('#' + id).addEventListener('input', updateInfo));
+$('#fMilestone').addEventListener('change', updateInfo);
+
+function openTask(id, preset = {}) {
+  hideTip();
+  const t = id ? S.tasks.find(x => x.id === id) : null;
+  editing = t ? t.id : null;
+  const defStart = TODAY >= S.range.start && TODAY <= S.range.end ? TODAY : S.range.start;
+  const start = preset.start || defStart;
+  const base = t || {title: '', memberId: preset.memberId || '', category: preset.category || '', start, end: preset.end || (addDays(start, 13) > S.range.end ? S.range.end : addDays(start, 13)),
+    progress: 0, status: 'todo', priority: 'med', milestone: false, notes: ''};
+  $('#taskDlgTitle').textContent = t ? 'Edit Task' : 'New Task';
+  $('#fTitle').value = base.title;
+  $('#fMember').innerHTML = `<option value="">★ Team-wide</option>` + S.members.map(m => `<option value="${m.id}">${esc(m.name || 'Unnamed')}${m.role ? ' — ' + esc(m.role) : ''}</option>`).join('');
+  $('#fMember').value = S.members.some(m => m.id === base.memberId) ? base.memberId : '';
+  fillCatSelect(base.category);
+  $('#fStart').value = base.start; $('#fEnd').value = base.end;
+  for (const f of ['fStart', 'fEnd']) { $('#' + f).min = S.range.start; $('#' + f).max = S.range.end; }
+  $('#fProgress').value = base.status === 'done' ? 100 : base.progress; updatePct();
+  setSeg('fStatus', base.status); setSeg('fPriority', base.priority);
+  $('#fMilestone').checked = base.milestone;
+  $('#fNotes').value = base.notes;
+  $('#fDelete').hidden = $('#fDup').hidden = !t;
+  updateInfo();
+  taskDlg.showModal();
+  if (!t) $('#fTitle').focus();
+}
+$('#taskForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const ms = $('#fMilestone').checked;
+  let end = $('#fEnd').value, start = ms ? end : $('#fStart').value;
+  if (!isDate(start) || !isDate(end)) return toast('Please choose valid dates');
+  if (end < start) return toast('Deadline must be on or after the start date');
+  let status = segVal('fStatus') || 'todo', progress = +$('#fProgress').value;
+  if (status === 'done') progress = 100;
+  if (progress === 100) status = 'done';
+  const data = {title: $('#fTitle').value.trim() || 'Untitled', memberId: $('#fMember').value, category: $('#fCat').value,
+    start, end, progress, status, priority: segVal('fPriority') || 'med', milestone: ms, notes: $('#fNotes').value.trim()};
+  if (editing) Object.assign(S.tasks.find(x => x.id === editing), data);
+  else S.tasks.push({id: uid(), ...data});
+  save(); render(); taskDlg.close();
+  toast(editing ? 'Task updated' : `Added “${data.title}”`);
+});
+$('#fDelete').onclick = () => {
+  const t = S.tasks.find(x => x.id === editing); if (!t) return;
+  if (!confirm(`Delete “${t.title}”?`)) return;
+  S.tasks = S.tasks.filter(x => x.id !== editing); save(); render(); taskDlg.close(); toast('Task deleted');
+};
+$('#fDup').onclick = () => {
+  const t = S.tasks.find(x => x.id === editing); if (!t) return;
+  const c = {...t, id: uid(), title: t.title + ' (copy)', progress: 0, status: 'todo'};
+  S.tasks.push(c); save(); render(); taskDlg.close(); openTask(c.id);
+};
+
+function fillCatSelect(val) {
+  const names = S.subsystems.map(x => x.name);
+  if (val && !names.includes(val)) names.push(val);
+  $('#fCat').innerHTML = '<option value="">None</option>' + names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('#fCat').value = val || '';
+}
+$('#fCatManage').onclick = () => openSubs();
+
+/* ---------- subsystems dialog ---------- */
+const subDlg = $('#subDlg');
+function renderSubs() {
+  $('#subList').innerHTML = S.subsystems.map((x, i) => `
+    <div class="mrow" data-sid="${x.id}" style="--c:${x.color}">
+      <span class="avatar sq">${esc(x.name[0].toUpperCase())}</span>
+      <div class="mfields">
+        <input data-f="name" value="${esc(x.name)}" placeholder="Subsystem name" autocomplete="off" style="grid-column:1/-1">
+        <div class="palette">${PALETTE.map(c => `<button type="button" class="pc${c === x.color ? ' on' : ''}" data-color="${c}" style="--s:${c}" title="${c}"></button>`).join('')}</div>
+      </div>
+      <div class="mbtns">
+        <div style="display:flex;gap:4px"><button class="tiny" data-move="-1" ${i === 0 ? 'disabled' : ''} title="Move up">↑</button><button class="tiny" data-move="1" ${i === S.subsystems.length - 1 ? 'disabled' : ''} title="Move down">↓</button><button class="tiny del" data-del title="Delete subsystem">✕</button></div>
+        <span class="mcount">${plural(S.tasks.filter(t => t.category === x.name).length, 'task')}</span>
+      </div>
+    </div>`).join('') || '<p class="muted" style="margin:0">No subsystems yet. Add one above.</p>';
+}
+function openSubs() { renderSubs(); subDlg.showModal(); $('#newSub').focus(); }
+subDlg.addEventListener('close', () => { if (taskDlg.open) fillCatSelect($('#fCat').value); });
+$('#subList').addEventListener('change', e => {
+  const row = e.target.closest('.mrow'); if (!row || e.target.dataset.f !== 'name') return;
+  const x = S.subsystems.find(y => y.id === row.dataset.sid), nv = e.target.value.trim();
+  if (!nv) { e.target.value = x.name; return toast('Subsystem name can’t be empty'); }
+  if (nv !== x.name && S.subsystems.some(y => y.name === nv)) { e.target.value = x.name; return toast(`“${nv}” already exists`); }
+  S.tasks.forEach(t => { if (t.category === x.name) t.category = nv; });
+  if (S.ui.collapsed['c:' + x.name]) { S.ui.collapsed['c:' + nv] = true; delete S.ui.collapsed['c:' + x.name]; }
+  x.name = nv; save(); renderSubs(); render();
+});
+$('#subList').addEventListener('click', e => {
+  const row = e.target.closest('.mrow'); if (!row) return;
+  const i = S.subsystems.findIndex(y => y.id === row.dataset.sid), x = S.subsystems[i];
+  const c = e.target.closest('[data-color]'), mv = e.target.closest('[data-move]');
+  if (c) x.color = c.dataset.color;
+  else if (mv) { const j = i + +mv.dataset.move; [S.subsystems[i], S.subsystems[j]] = [S.subsystems[j], S.subsystems[i]]; }
+  else if (e.target.closest('[data-del]')) {
+    const n = S.tasks.filter(t => t.category === x.name).length;
+    if (!confirm(`Delete the “${x.name}” subsystem?${n ? `\n\n${plural(n, 'task')} will be set to no subsystem (the tasks are kept).` : ''}`)) return;
+    S.tasks.forEach(t => { if (t.category === x.name) t.category = ''; });
+    S.subsystems.splice(i, 1);
+  } else return;
+  save(); renderSubs(); render();
+});
+$('#subAdd').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#newSub').value.trim(); if (!name) return;
+  if (S.subsystems.some(y => y.name.toLowerCase() === name.toLowerCase())) return toast(`“${name}” already exists`);
+  const used = new Set(S.subsystems.map(y => y.color));
+  S.subsystems.push({id: uid(), name, color: PALETTE.find(c => !used.has(c)) || defaultCatColor(name)});
+  $('#newSub').value = '';
+  save(); renderSubs(); render(); $('#newSub').focus();
+});
+
+/* ---------- competition countdown ---------- */
+const compDlg = $('#compDlg');
+function compPreview() {
+  const d = $('#cDate').value;
+  if (!isDate(d)) { $('#cPreview').textContent = '—'; $('#cPreviewSub').textContent = 'Pick a date'; return; }
+  const n = diff(TODAY, d);
+  $('#cPreview').textContent = n > 0 ? plural(n, 'day') : n === 0 ? 'Today!' : 'Passed';
+  $('#cPreviewSub').textContent = n > 0 ? `until ${$('#cName').value.trim() || 'the competition'} · ${(n / 7).toFixed(1)} weeks` : fmt(d, {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
+}
+function openComp() {
+  $('#cName').value = S.competition.name; $('#cDate').value = S.competition.date; $('#cShow').checked = S.competition.show;
+  compPreview(); compDlg.showModal(); $('#cName').focus();
+}
+$('#stats').addEventListener('click', e => { if (e.target.closest('#compCard') && !document.body.classList.contains('shot')) openComp(); });
+['cName', 'cDate'].forEach(id => $('#' + id).addEventListener('input', compPreview));
+$('#compForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!isDate($('#cDate').value)) return toast('Please choose a date');
+  S.competition = {name: $('#cName').value.trim(), date: $('#cDate').value, show: $('#cShow').checked};
+  save(); render(); compDlg.close(); toast('Competition countdown updated');
+});
+$('#cClear').onclick = () => { S.competition = {name: '', date: '', show: true}; save(); render(); compDlg.close(); };
+// Tick over at midnight so the countdown drops by one each day without reloading.
+function checkDay() { const t = localToday(); if (t !== TODAY) { TODAY = t; render(); } }
+setInterval(checkDay, 60 * 1000);
+document.addEventListener('visibilitychange', () => !document.hidden && checkDay());
+
+/* ---------- team logo ---------- */
+function setLogo(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return toast('Please choose an image file');
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    // Downscale so it fits comfortably in browser storage.
+    const max = 320, w = img.naturalWidth || max, h = img.naturalHeight || max, k = Math.min(1, max / Math.max(w, h));
+    const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    const prev = S.team.logo; S.team.logo = c.toDataURL('image/png');
+    if (!save()) S.team.logo = prev; else toast('Logo updated');
+    render();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('Couldn’t read that image'); };
+  img.src = url;
+}
+$('#logoBtn').onclick = () => { if (!document.body.classList.contains('shot')) $('#logoFile').click(); };
+$('#logoFile').onchange = e => { setLogo(e.target.files[0]); e.target.value = ''; };
+$('#sLogo').onclick = () => $('#logoFile').click();
+$('#sLogoRm').onclick = () => { S.team.logo = ''; save(); render(); toast('Logo removed'); };
+
+/* ---------- members dialog ---------- */
+const memDlg = $('#memDlg');
+function renderMembers() {
+  $('#memList').innerHTML = S.members.map((m, i) => `
+    <div class="mrow" data-mid="${m.id}" style="--c:${m.color}">
+      <span class="avatar">${esc(initials(m.name))}</span>
+      <div class="mfields">
+        <input data-f="name" value="${esc(m.name)}" placeholder="Name" autocomplete="off">
+        <input data-f="role" value="${esc(m.role)}" placeholder="Role" autocomplete="off">
+        <div class="palette">${PALETTE.map(c => `<button type="button" class="pc${c === m.color ? ' on' : ''}" data-color="${c}" style="--s:${c}" title="${c}"></button>`).join('')}</div>
+      </div>
+      <div class="mbtns">
+        <div style="display:flex;gap:4px"><button class="tiny" data-move="-1" ${i === 0 ? 'disabled' : ''} title="Move up">↑</button><button class="tiny" data-move="1" ${i === S.members.length - 1 ? 'disabled' : ''} title="Move down">↓</button><button class="tiny del" data-del title="Remove member">✕</button></div>
+        <span class="mcount">${plural(S.tasks.filter(t => t.memberId === m.id).length, 'task')}</span>
+      </div>
+    </div>`).join('') || '<p class="muted" style="margin:0">No members yet. Add your first teammate below.</p>';
+}
+function openMembers() { renderMembers(); memDlg.showModal(); }
+$('#membersBtn').onclick = openMembers;
+$('#memList').addEventListener('input', e => {
+  const row = e.target.closest('.mrow'), f = e.target.dataset.f; if (!row || !f) return;
+  const m = S.members.find(x => x.id === row.dataset.mid); m[f] = e.target.value;
+  if (f === 'name') row.querySelector('.avatar').textContent = initials(m.name);
+  save(); render();
+});
+$('#memList').addEventListener('click', e => {
+  const row = e.target.closest('.mrow'); if (!row) return;
+  const i = S.members.findIndex(x => x.id === row.dataset.mid), m = S.members[i];
+  const c = e.target.closest('[data-color]'), mv = e.target.closest('[data-move]');
+  if (c) m.color = c.dataset.color;
+  else if (mv) { const j = i + +mv.dataset.move; [S.members[i], S.members[j]] = [S.members[j], S.members[i]]; }
+  else if (e.target.closest('[data-del]')) {
+    const n = S.tasks.filter(t => t.memberId === m.id).length;
+    if (!confirm(`Remove ${m.name || 'this member'}?${n ? `\n\nTheir ${plural(n, 'task')} will move to Team-wide.` : ''}`)) return;
+    S.tasks.forEach(t => { if (t.memberId === m.id) t.memberId = ''; });
+    S.members.splice(i, 1);
+  } else return;
+  save(); renderMembers(); render();
+});
+$('#memAdd').addEventListener('submit', e => {
+  e.preventDefault();
+  const used = new Set(S.members.map(m => m.color));
+  const color = PALETTE.find(c => !used.has(c)) || PALETTE[S.members.length % PALETTE.length];
+  S.members.push({id: uid(), name: $('#newName').value.trim(), role: $('#newRole').value.trim(), color});
+  $('#newName').value = $('#newRole').value = '';
+  save(); renderMembers(); render(); $('#newName').focus();
+  toast('Member added');
+});
+
+/* ---------- settings dialog ---------- */
+const setDlg = $('#setDlg');
+$('#settingsBtn').onclick = () => {
+  $('#sName').value = S.team.name; $('#sSeason').value = S.team.season;
+  $('#sStart').value = S.range.start; $('#sEnd').value = S.range.end;
+  setSeg('sTheme', S.ui.theme);
+  setDlg.showModal();
+};
+$('#sName').oninput = e => { S.team.name = e.target.value; save(); renderTop(); };
+$('#sSeason').oninput = e => { S.team.season = e.target.value; save(); renderTop(); };
+function setRange(start, end) {
+  if (!isDate(start) || !isDate(end) || end <= start) return toast('End date must be after the start date');
+  if (diff(start, end) > 1100) return toast('Please keep the chart under 3 years');
+  S.range = {start, end}; save(); render();
+}
+$('#sStart').onchange = () => setRange($('#sStart').value, $('#sEnd').value);
+$('#sEnd').onchange = () => setRange($('#sStart').value, $('#sEnd').value);
+$('#sResetRange').onclick = () => { const r = defaultRange(); $('#sStart').value = r.start; $('#sEnd').value = r.end; setRange(r.start, r.end); };
+$('#sExport').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 2)], {type: 'application/json'}));
+  a.download = `${(S.team.name || 'robotics').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-gantt.json`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#sImport').onclick = () => $('#sFile').click();
+$('#sFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(txt => {
+    const d = JSON.parse(txt);
+    if (!Array.isArray(d.members) || !Array.isArray(d.tasks)) throw new Error();
+    S = normalize(d); save(); render(); setDlg.close(); toast('Imported ' + plural(S.tasks.length, 'task'));
+  }).catch(() => toast('That file doesn’t look like a planner export')).finally(() => { e.target.value = ''; });
+};
+$('#sClear').onclick = () => { if (confirm('Erase all members and tasks? This cannot be undone (export first if unsure).')) { const ui = S.ui, logo = S.team.logo; S = blank(); S.team.logo = logo; S.ui = {...ui, collapsed: {}, hidden: {}}; save(); render(); setDlg.close(); openMembers(); } };
+$('#sPrint').onclick = () => { setDlg.close(); setShot(true); setTimeout(() => window.print(), 150); };
+
+for (const d of document.querySelectorAll('dialog')) {
+  d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); });
+}
+
+/* ---------- screenshot mode ---------- */
+function setShot(on) {
+  hideTip();
+  document.body.classList.toggle('shot', on);
+  if (on) { shotPrevZoom = S.ui.zoom; S.ui.zoom = 'fit'; }
+  else if (shotPrevZoom) { S.ui.zoom = shotPrevZoom; shotPrevZoom = null; }
+  render();
+  if (on) { scrollTo(0, 0); toast('Screenshot mode · press Esc to exit'); }
+}
+$('#shotBtn').onclick = () => setShot(true);
+$('#exitShot').onclick = () => setShot(false);
+addEventListener('afterprint', () => document.body.classList.contains('shot') && setShot(false));
+
+/* ---------- keyboard ---------- */
+addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]')) return;
+  const shot = document.body.classList.contains('shot');
+  if (e.key === 'Escape' && shot) return setShot(false);
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'n' && !shot) { e.preventDefault(); openTask(); }
+  else if (k === 't') scrollToDate(TODAY);
+  else if (k === 's') setShot(!shot);
+  else if (k === 'm' && !shot) openMembers();
+  else if (k === 'c' && !shot) openComp();
+  else if ('1234'.includes(k) && k.length === 1) setZoom(['day', 'week', 'month', 'fit'][+k - 1]);
+  else if (k === 'arrowleft' && !shot) $('#prevBtn').click();
+  else if (k === 'arrowright' && !shot) $('#nextBtn').click();
+});
+
+/* ---------- go ---------- */
+render();
+requestAnimationFrame(() => scrollToDate(TODAY, .12, false));
+})();
+</script>
+</body>
+</html>
