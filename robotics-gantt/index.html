@@ -478,6 +478,11 @@ body.shot #exitShot:hover{opacity:1}
       <div class="seg wide" id="sTheme"><button data-v="light" type="button">Light</button><button data-v="dark" type="button">Dark</button><button data-v="auto" type="button">Automatic</button></div>
     </div>
     <div class="set-group">
+      <h3>Team sync</h3>
+      <span class="muted" id="syncStatus" style="font-size:12px"></span>
+      <div class="btn-row"><button class="btn ghost" id="sSync" type="button">Change team code…</button></div>
+    </div>
+    <div class="set-group">
       <h3>Data</h3>
       <div class="btn-row">
         <button class="btn ghost" id="sExport" type="button">Export JSON</button>
@@ -488,7 +493,7 @@ body.shot #exitShot:hover{opacity:1}
       <div class="btn-row">
         <button class="btn ghost danger" id="sClear" type="button">Start fresh (erase all)</button>
       </div>
-      <span class="muted" style="font-size:12px">Everything is saved in this browser automatically. Export a JSON file to back up or share with teammates.</span>
+      <span class="muted" style="font-size:12px">Everything saves automatically. With team sync on, changes (including imports and erasing) apply for everyone. Export a JSON file to keep a backup.</span>
     </div>
   </div>
   <div class="dlg-foot"><span class="spacer"></span><button class="btn primary" data-close>Done</button></div>
@@ -529,6 +534,8 @@ body.shot #exitShot:hover{opacity:1}
   </form>
 </dialog>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 (() => {
 'use strict';
@@ -553,6 +560,7 @@ const diff = (a, b) => Math.round((parse(b) - parse(a)) / DAY);
 const fmt = (s, o = {month:'short', day:'numeric'}) => new Date(parse(s)).toLocaleDateString(undefined, {timeZone:'UTC', ...o});
 const fmtY = s => fmt(s, {month:'short', day:'numeric', year:'numeric'});
 const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const isColor = s => typeof s === 'string' && /^#[0-9a-f]{3,8}$/i.test(s);
 const _n = new Date();
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 let TODAY = localToday();
@@ -609,7 +617,9 @@ function normalize(s) {
   s.team = {name: 'Robotics Team', season: '', ...(s.team || {})};
   s.range = s.range && isDate(s.range.start) && isDate(s.range.end) ? s.range : r;
   s.ui = {...defaultUI(), ...(s.ui || {})};
-  s.members = s.members.map(m => ({id: m.id || uid(), name: m.name || '', role: m.role || '', color: m.color || PALETTE[0]}));
+  // Shared data comes from teammates, so only allow real images and hex colors into the markup.
+  if (typeof s.team.logo !== 'string' || !s.team.logo.startsWith('data:image/')) s.team.logo = '';
+  s.members = s.members.map(m => ({id: m.id || uid(), name: m.name || '', role: m.role || '', color: isColor(m.color) ? m.color : PALETTE[0]}));
   s.tasks = s.tasks.filter(t => isDate(t.start) && isDate(t.end)).map(t => ({
     id: t.id || uid(), title: t.title || 'Untitled', memberId: t.memberId || '', category: t.category || '',
     start: t.start, end: t.end < t.start ? t.start : t.end, progress: Math.max(0, Math.min(100, +t.progress || 0)),
@@ -617,17 +627,110 @@ function normalize(s) {
     milestone: !!t.milestone, notes: t.notes || ''}));
   const subs = (Array.isArray(s.subsystems) ? s.subsystems : DEFAULT_SUBS.map(name => ({name})))
     .filter(x => x && String(x.name || '').trim())
-    .map(x => ({id: x.id || uid(), name: String(x.name).trim(), color: x.color || defaultCatColor(String(x.name).trim())}));
+    .map(x => ({id: x.id || uid(), name: String(x.name).trim(), color: isColor(x.color) ? x.color : defaultCatColor(String(x.name).trim())}));
   for (const t of s.tasks) if (t.category && !subs.some(x => x.name === t.category)) subs.push({id: uid(), name: t.category, color: defaultCatColor(t.category)});
   s.subsystems = subs;
   s.competition = {name: '', date: '', show: true, ...(s.competition || {})};
   if (!isDate(s.competition.date)) s.competition.date = '';
   return s;
 }
+/* ---------- team sync (Firebase Firestore) ---------- */
+// Paste the firebaseConfig object from your Firebase project here to share the planner live.
+// Leave as null to keep everything in this browser only.
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDgvj1PpDqwoRQq6aQAJoXcHkEjmXzHn_4',
+  authDomain: 'luckycats-ganntchart.firebaseapp.com',
+  projectId: 'luckycats-ganntchart',
+  storageBucket: 'luckycats-ganntchart.firebasestorage.app',
+  messagingSenderId: '687245297697',
+  appId: '1:687245297697:web:dd80e059529b88b31ebb60',
+};
+const CODE_KEY = 'robotics-gantt-team-code';
+// View settings (zoom, theme, collapsed rows) stay personal; everything else is shared.
+const sharedJSON = s => { const {ui, ...rest} = s; return JSON.stringify(rest); };
+let syncRef = null, syncUnsub = null, syncReady = false, syncCode = '', lastSynced = null, pushT = null, pendingRemote = null;
+function setSync(state) {
+  const el = $('#syncStatus'), btn = $('#sSync');
+  btn.hidden = state === 'unconfigured';
+  btn.textContent = syncCode ? 'Change team code…' : 'Join team…';
+  el.textContent = {
+    unconfigured: 'Team sync isn’t set up yet — changes stay in this browser.',
+    off: 'Not connected — changes stay in this browser.',
+    connecting: 'Connecting…',
+    live: `Live · shared with everyone using team code “${syncCode}”.`,
+    error: 'Couldn’t reach team sync — changes are saved in this browser for now.',
+  }[state];
+}
+function queuePush() {
+  if (!syncRef || !syncReady) return;
+  clearTimeout(pushT);
+  pushT = setTimeout(pushNow, 500);
+}
+function pushNow() {
+  pushT = null;
+  const data = sharedJSON(S);
+  if (data === lastSynced) return;
+  lastSynced = data;
+  syncRef.set({data, at: firebase.firestore.FieldValue.serverTimestamp()})
+    .then(() => setSync('live'))
+    .catch(() => { lastSynced = null; setSync('error'); toast('Couldn’t sync — check your connection'); });
+}
+function applyRemote(data) {
+  if (drag) { pendingRemote = data; return; }  // don't yank a bar out from under the mouse
+  let d;
+  try { d = JSON.parse(data); } catch { return; }
+  if (!validData(d)) return;
+  S = normalize({...d, ui: S.ui});
+  lastSynced = data;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
+  render();
+}
+function startSync(code) {
+  if (syncUnsub) syncUnsub();
+  clearTimeout(pushT); pushT = null;
+  syncCode = code; syncReady = false; lastSynced = null;
+  syncRef = firebase.firestore().collection('planners').doc(code);
+  setSync('connecting');
+  syncUnsub = syncRef.onSnapshot(snap => {
+    if (snap.metadata.hasPendingWrites) return;
+    const data = snap.exists ? snap.get('data') : null;
+    if (!syncReady) {
+      syncReady = true;
+      if (data && data !== sharedJSON(S)) {
+        // Joining replaces this browser's copy with the team's — keep a backup just in case.
+        try { localStorage.setItem(KEY + '-backup', JSON.stringify(S)); } catch {}
+      } else if (!data && (S.tasks.length || S.members.length)) {
+        pushNow();  // first one in: seed the team copy with this browser's planner
+      }
+    }
+    if (data && data !== lastSynced && !pushT) applyRemote(data);
+    setSync('live');
+  }, err => {
+    setSync('error');
+    toast(err.code === 'permission-denied' ? 'That team code isn’t allowed' : 'Couldn’t connect to team sync');
+  });
+}
+function initSync(ask) {
+  if (!FIREBASE_CONFIG) return setSync('unconfigured');
+  if (!window.firebase) return setSync('error');
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  let code = localStorage.getItem(CODE_KEY) || '';
+  if (!code || ask) {
+    const v = prompt('Enter your team code to share this planner live.\nEveryone on the team uses the same code (8+ letters, numbers, - or _).', code);
+    if (v === null) return setSync(syncReady ? 'live' : 'off');
+    if (!/^[A-Za-z0-9_-]{8,64}$/.test(v.trim())) { toast('Team code must be 8+ letters, numbers, - or _'); return setSync(syncReady ? 'live' : 'off'); }
+    code = v.trim();
+    localStorage.setItem(CODE_KEY, code);
+  }
+  startSync(code);
+}
+
 let S = load() || blank();
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(S)); return true; }
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
   catch { toast('Couldn’t save — browser storage is full'); return false; }
+  queuePush();
+  return true;
 }
 save();
 
@@ -1005,6 +1108,8 @@ addEventListener('pointerup', () => {
   bar.classList.remove('dragging');
   if (moved) { save(); render(); toast(t.milestone ? `${t.title} → ${fmtY(t.end)}` : `${t.title}: ${fmt(t.start)} – ${fmt(t.end)}`); }
   else { hideTip(); openTask(t.id); }
+  if (pendingRemote && !moved) { const d = pendingRemote; pendingRemote = null; applyRemote(d); }
+  else pendingRemote = null;  // our drag wins; it was just pushed
 });
 
 /* ---------- tooltip ---------- */
@@ -1316,7 +1421,7 @@ $('#sFile').onchange = e => {
     S = normalize(d); save(); render(); setDlg.close(); toast('Imported ' + plural(S.tasks.length, 'task'));
   }).catch(() => toast('That file doesn’t look like a planner export')).finally(() => { e.target.value = ''; });
 };
-$('#sClear').onclick = () => { if (confirm('Erase all members and tasks? This cannot be undone (export first if unsure).')) { const ui = S.ui, logo = S.team.logo; S = blank(); S.team.logo = logo; S.ui = {...ui, collapsed: {}, hidden: {}}; save(); render(); setDlg.close(); openMembers(); } };
+$('#sClear').onclick = () => { if (confirm(`Erase all members and tasks${syncReady ? ' for everyone on the team' : ''}? This cannot be undone (export first if unsure).`)) { const ui = S.ui, logo = S.team.logo; S = blank(); S.team.logo = logo; S.ui = {...ui, collapsed: {}, hidden: {}}; save(); render(); setDlg.close(); openMembers(); } };
 $('#sPrint').onclick = () => { setDlg.close(); setShot(true); setTimeout(() => window.print(), 150); };
 
 for (const d of document.querySelectorAll('dialog')) {
@@ -1353,8 +1458,11 @@ addEventListener('keydown', e => {
   else if (k === 'arrowright' && !shot) $('#nextBtn').click();
 });
 
+$('#sSync').onclick = () => initSync(true);
+
 /* ---------- go ---------- */
 render();
+initSync(false);
 requestAnimationFrame(() => scrollToDate(TODAY, .12, false));
 })();
 </script>
