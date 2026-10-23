@@ -339,6 +339,61 @@ body.shot #exitShot:hover{opacity:1}
   .corner,.row .label{position:static}
 }
 @media (max-width:900px){ :root{--label:210px} }
+
+/* ---------- Quick links ---------- */
+.linkbtn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:var(--text)}
+.linkbtn img,.linkbtn svg{width:16px;height:16px;flex:none}
+.linkbtn.unset{color:var(--muted)}
+
+/* ---------- Assignee picker ---------- */
+.picks{display:flex;flex-wrap:wrap;gap:6px}
+.pick{border:0;display:inline-flex;align-items:center;gap:6px;background:var(--field);border-radius:980px;padding:5px 11px 5px 6px;font-size:12.5px;font-weight:600;color:var(--sec);transition:background .15s}
+.pick i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1.6px var(--c);flex:none}
+.pick.on{background:color-mix(in srgb,var(--c) 18%,var(--field));color:var(--text)}
+.pick.on i{background:var(--c)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+/* ---------- My Tasks ---------- */
+#mine{display:none;flex:1;min-height:0;overflow:auto;padding:4px 24px 28px}
+body.mine #mine{display:block}
+body.mine .nav,body.mine #zoomSeg,body.mine #groupSeg,body.mine .subbar,body.mine .board,body.mine .legend,body.mine #shotBtn{display:none}
+.mine-wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.me-card{display:flex;align-items:center;gap:14px;background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:16px 18px;flex-wrap:wrap}
+.me-card .avatar{width:50px;height:50px;font-size:17px}
+.me-card h2{margin:0;font-size:21px;letter-spacing:-.02em}
+.me-card .gsub{font-size:12.5px}
+.mstats{display:flex;gap:10px;flex-wrap:wrap}
+.msec h3{margin:4px 4px 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;gap:8px}
+.msec h3 .n{background:var(--field);border-radius:980px;padding:1px 7px;font-size:11px;color:var(--sec)}
+.msec h3.red{color:var(--red)}
+.msec h3 button{border:0;background:none;color:var(--accent);font:inherit;text-transform:none;letter-spacing:0;padding:0;margin-left:auto}
+.tlist{display:flex;flex-direction:column;gap:8px}
+.tcard{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px 12px 12px;cursor:pointer;border-left:4px solid var(--c);transition:transform .12s}
+.tcard:hover{transform:translateY(-1px)}
+.tcard .tt{font-weight:650;font-size:14.5px;letter-spacing:-.01em}
+.tcard .tm{font-size:12px;color:var(--muted);margin-top:2px}
+.tcard .tm .hi{color:var(--red);font-weight:700}
+.tcard .tn{font-size:12.5px;color:var(--sec);margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tcard .tp{height:4px;border-radius:2px;background:var(--line2);margin-top:8px;overflow:hidden;max-width:260px}
+.tcard .tp i{display:block;height:100%;background:var(--c);border-radius:2px}
+.tcard .due{font-size:12px;font-weight:650;text-align:right;white-space:nowrap;color:var(--sec)}
+.tcard .due.red{color:var(--red)}.tcard .due.orange{color:var(--orange)}.tcard .due.green{color:var(--green)}
+.tcard.done{opacity:.6}
+.tcard.done .tt{text-decoration:line-through}
+.ckbtn{border:0;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1.8px var(--muted);background:transparent;display:grid;place-items:center;color:transparent;padding:0;margin-top:-1px}
+.ckbtn svg{width:13px;height:13px}
+.ckbtn:hover{color:var(--muted)}
+.ckbtn.on{background:var(--green);box-shadow:none;color:#fff}
+.mempty{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:22px;text-align:center;color:var(--muted)}
+.pick-head{text-align:center;padding:24px 10px 4px}
+.pick-head h2{margin:0 0 6px;font-size:26px;letter-spacing:-.025em}
+.pick-head p{margin:0;color:var(--muted)}
+.melist{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.mepick{border:0;display:flex;align-items:center;gap:12px;background:var(--surface);box-shadow:var(--shadow);border-radius:16px;padding:12px 14px;text-align:left;transition:transform .12s}
+.mepick:hover{transform:translateY(-2px)}
+.mepick b{display:block;font-size:14px}
+.mepick small{color:var(--muted);font-size:12px}
+@media (max-width:640px){ .grid3{grid-template-columns:1fr 1fr} #mine{padding:4px 12px 24px} }
 </style>
 </head>
 <body>
@@ -353,6 +408,9 @@ body.shot #exitShot:hover{opacity:1}
     </div>
   </div>
   <div class="controls">
+    <div class="seg" id="viewSeg" title="Switch view">
+      <button data-v="team">Team Chart</button><button data-v="mine">My Tasks</button>
+    </div>
     <div class="nav">
       <button class="icon-btn" id="prevBtn" title="Scroll earlier (←)"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="btn" id="todayBtn" title="Jump to today (T)">Today</button>
@@ -367,6 +425,7 @@ body.shot #exitShot:hover{opacity:1}
     </div>
   </div>
   <div class="actions">
+    <span id="links" style="display:contents"></span>
     <button class="btn" id="membersBtn">
       <span style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><circle cx="6" cy="5" r="2.6"/><path d="M1 13.5c0-2.6 2.2-4.3 5-4.3s5 1.7 5 4.3v.5H1z"/><circle cx="11.6" cy="5.6" r="2" opacity=".55"/><path d="M12 9.4c1.8.2 3.2 1.6 3.2 3.6v1H12.4c0-1.8-.2-3.3-1.3-4.4.3-.1.6-.2.9-.2z" opacity=".55"/></svg>Team</span>
     </button>
@@ -392,6 +451,7 @@ body.shot #exitShot:hover{opacity:1}
 
 <main class="board"><div class="card"><div class="scroller" id="scroller"><div id="canvas"></div></div></div></main>
 <footer class="legend" id="legend"></footer>
+<section id="mine"></section>
 
 <button id="exitShot">Exit screenshot mode · Esc</button>
 <div id="tip"></div>
@@ -403,8 +463,8 @@ body.shot #exitShot:hover{opacity:1}
     <div class="dlg-head"><h2 id="taskDlgTitle">New Task</h2><button type="button" class="x" data-close>✕</button></div>
     <div class="dlg-body">
       <input id="fTitle" class="big" placeholder="What needs to get done?" required autocomplete="off">
-      <div class="grid2">
-        <label>Assigned to<select id="fMember"></select></label>
+      <div class="field"><span class="flabel">Assigned to<span class="muted" id="fWhoHint" style="font-weight:500"></span></span><div class="picks" id="fMembers"></div></div>
+      <div class="grid3">
         <div class="field"><span class="flabel">Subsystem<button type="button" class="lnk" id="fCatManage">Edit list</button></span><select id="fCat"></select></div>
         <label id="startWrap">Start date<input type="date" id="fStart" required></label>
         <label><span id="endLabel">Deadline</span><input type="date" id="fEnd" required></label>
@@ -459,6 +519,12 @@ body.shot #exitShot:hover{opacity:1}
         <label>Team name<input id="sName" autocomplete="off"></label>
         <label>Season label<input id="sSeason" autocomplete="off"></label>
       </div>
+    </div>
+    <div class="set-group">
+      <h3>Links</h3>
+      <label>Onshape document<input id="sOnshape" type="url" placeholder="https://cad.onshape.com/documents/…" autocomplete="off"></label>
+      <label>Engineering Notebook (Google Slides)<input id="sNotebook" type="url" placeholder="https://docs.google.com/presentation/d/…" autocomplete="off"></label>
+      <span class="muted" style="font-size:12px">Shown as buttons in the top bar for everyone on the team. Leave Onshape blank to open the Onshape home page.</span>
     </div>
     <div class="set-group">
       <h3>Team logo</h3>
@@ -586,7 +652,8 @@ function defaultCatColor(c) {
 }
 
 /* ---------- state ---------- */
-function defaultUI() { return {zoom:'week', group:'member', theme:'auto', collapsed:{}, hidden:{}, hideDone:false}; }
+function defaultUI() { return {zoom:'week', group:'member', theme:'auto', collapsed:{}, hidden:{}, hideDone:false, view:'team', me:'', meAsked:false}; }
+const safeUrl = u => typeof u === 'string' && /^https?:\/\/[^\s"'<>]+$/i.test(u.trim()) ? u.trim() : '';
 
 // Placeholder data from the first version — stripped out when migrating saved data.
 const OLD_SAMPLE_MEMBERS = new Set(["Maya Patel", "Jordan Lee", "Ethan Brooks", "Sam Rivera", "Priya Shah", "Zoe Kim"]);
@@ -617,11 +684,15 @@ function normalize(s) {
   s.team = {name: 'Robotics Team', season: '', ...(s.team || {})};
   s.range = s.range && isDate(s.range.start) && isDate(s.range.end) ? s.range : r;
   s.ui = {...defaultUI(), ...(s.ui || {})};
+  if (s.ui.view !== 'mine') s.ui.view = 'team';
+  s.links = {onshape: safeUrl(s.links?.onshape), notebook: safeUrl(s.links?.notebook)};
   // Shared data comes from teammates, so only allow real images and hex colors into the markup.
   if (typeof s.team.logo !== 'string' || !s.team.logo.startsWith('data:image/')) s.team.logo = '';
   s.members = s.members.map(m => ({id: m.id || uid(), name: m.name || '', role: m.role || '', color: isColor(m.color) ? m.color : PALETTE[0]}));
   s.tasks = s.tasks.filter(t => isDate(t.start) && isDate(t.end)).map(t => ({
-    id: t.id || uid(), title: t.title || 'Untitled', memberId: t.memberId || '', category: t.category || '',
+    id: t.id || uid(), title: t.title || 'Untitled', category: t.category || '',
+    // Older saves had a single memberId; tasks now take any number of assignees.
+    memberIds: [...new Set((Array.isArray(t.memberIds) ? t.memberIds : t.memberId ? [t.memberId] : []).filter(x => typeof x === 'string' && x))],
     start: t.start, end: t.end < t.start ? t.start : t.end, progress: Math.max(0, Math.min(100, +t.progress || 0)),
     status: STATUS[t.status] ? t.status : 'todo', priority: PRI[t.priority] ? t.priority : 'med',
     milestone: !!t.milestone, notes: t.notes || ''}));
@@ -684,6 +755,7 @@ function applyRemote(data) {
   lastSynced = data;
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
   render();
+  maybeAskMe();
 }
 function startSync(code) {
   if (syncUnsub) syncUnsub();
@@ -735,8 +807,11 @@ function save() {
 save();
 
 /* ---------- derived ---------- */
-const memberOf = t => S.members.find(m => m.id === t.memberId);
-const colorOf = t => memberOf(t)?.color || (t.category ? catColor(t.category) : TEAM_COLOR);
+const membersOf = t => t.memberIds.map(id => S.members.find(m => m.id === id)).filter(Boolean);
+// In a member's row, their own color wins; elsewhere a shared task takes its first assignee's color.
+const colorOf = (t, m) => (m || membersOf(t)[0])?.color || (t.category ? catColor(t.category) : TEAM_COLOR);
+const firstName = m => (m.name || 'Unnamed').split(' ')[0];
+const meMember = () => S.members.find(m => m.id === S.ui.me);
 const isOverdue = t => t.status !== 'done' && t.end < TODAY;
 const totalDays = () => diff(S.range.start, S.range.end) + 1;
 const avgProgress = ts => ts.length ? Math.round(ts.reduce((a, t) => a + (t.status === 'done' ? 100 : +t.progress), 0) / ts.length) : 0;
@@ -758,7 +833,8 @@ function computeDW() {
 function render() {
   applyTheme();
   computeDW();
-  renderTop(); renderStats(); renderChips(); renderChart(); renderLegend();
+  document.body.classList.toggle('mine', S.ui.view === 'mine');
+  renderTop(); renderStats(); renderChips(); renderChart(); renderLegend(); renderMine();
 }
 
 function renderTop() {
@@ -767,6 +843,12 @@ function renderTop() {
   $('#subtitle').innerHTML = `${S.team.season ? `<b>${esc(S.team.season)}</b> · ` : ''}${fmtY(S.range.start)} – ${fmtY(S.range.end)}`;
   for (const b of document.querySelectorAll('#zoomSeg button')) b.classList.toggle('on', b.dataset.v === S.ui.zoom);
   for (const b of document.querySelectorAll('#groupSeg button')) b.classList.toggle('on', b.dataset.v === S.ui.group);
+  for (const b of document.querySelectorAll('#viewSeg button')) b.classList.toggle('on', b.dataset.v === S.ui.view);
+  const nb = S.links.notebook;
+  $('#links').innerHTML =
+    `<a class="btn linkbtn" href="${esc(S.links.onshape || 'https://cad.onshape.com/')}" target="_blank" rel="noopener" title="Open Onshape"><img src="https://www.google.com/s2/favicons?domain=onshape.com&sz=64" alt="">Onshape</a>` +
+    (nb ? `<a class="btn linkbtn" href="${esc(nb)}" target="_blank" rel="noopener" title="Open the Engineering Notebook">${SLIDES_ICON}Engineering Notebook</a>`
+        : `<button class="btn linkbtn unset" data-setlink="sNotebook" title="Add your Engineering Notebook link">${SLIDES_ICON}Engineering Notebook</button>`);
   $('#hideDone').checked = !!S.ui.hideDone;
   // month jump
   let opts = '<option value="" disabled selected>Jump to…</option>', cur = S.range.start.slice(0, 8) + '01';
@@ -784,6 +866,7 @@ function renderTop() {
   logo.classList.toggle('img', !!S.team.logo);
   logo.innerHTML = S.team.logo ? `<img src="${S.team.logo}" alt="Team logo">` : DEFAULT_LOGO;
 }
+const SLIDES_ICON = `<svg viewBox="0 0 16 16"><path d="M3.5 1h6.3L13 4.2v9.6a1.2 1.2 0 0 1-1.2 1.2H3.5a1.2 1.2 0 0 1-1.2-1.2V2.2A1.2 1.2 0 0 1 3.5 1z" fill="#F4B400"/><path d="M9.8 1v2.4c0 .5.3.8.8.8H13z" fill="#F8D57E"/><rect x="4.6" y="7" width="6.2" height="4.4" rx=".5" fill="none" stroke="#fff" stroke-width="1.2"/></svg>`;
 const DEFAULT_LOGO = `<svg width="26" height="26" viewBox="0 0 26 26" fill="none">
   <line x1="13" y1="2.5" x2="13" y2="6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="13" cy="2.4" r="1.6" fill="#fff"/>
   <rect x="4.5" y="6.5" width="17" height="13" rx="4.2" fill="#fff" fill-opacity=".95"/>
@@ -791,13 +874,13 @@ const DEFAULT_LOGO = `<svg width="26" height="26" viewBox="0 0 26 26" fill="none
   <rect x="2" y="10.5" width="2" height="5" rx="1" fill="#fff" fill-opacity=".85"/><rect x="22" y="10.5" width="2" height="5" rx="1" fill="#fff" fill-opacity=".85"/>
   <rect x="8" y="20.5" width="10" height="3" rx="1.5" fill="#fff" fill-opacity=".7"/></svg>`;
 
+const stat = (k, v, c, extra = '') => `<div class="stat" style="--c:${c}"><div class="k"><i></i>${k}</div><div class="v">${v}</div>${extra}</div>`;
 function renderStats() {
   const ts = S.tasks, work = ts.filter(t => !t.milestone);
   const done = ts.filter(t => t.status === 'done').length;
   const avg = avgProgress(work);
   const over = ts.filter(isOverdue).length;
   const soon = ts.filter(t => t.status !== 'done' && t.end >= TODAY && diff(TODAY, t.end) <= 14).length;
-  const stat = (k, v, c, extra = '') => `<div class="stat" style="--c:${c}"><div class="k"><i></i>${k}</div><div class="v">${v}</div>${extra}</div>`;
   $('#stats').innerHTML =
     stat('Members', S.members.length, '#007AFF') +
     stat('Tasks', `${done}<small>/ ${ts.length} done</small>`, '#5856D6') +
@@ -823,7 +906,7 @@ function compCard() {
 }
 
 function renderChips() {
-  const hasTeam = S.tasks.some(t => !memberOf(t));
+  const hasTeam = S.tasks.some(t => !membersOf(t).length);
   const list = [...(hasTeam ? [{id: '_team', name: 'Team-wide', color: TEAM_COLOR}] : []), ...S.members];
   $('#chips').innerHTML = list.map(m => `<button class="chip${S.ui.hidden[m.id] ? ' off' : ''}" data-chip="${m.id}" style="--c:${m.color}" title="Show / hide (Alt-click to solo)"><i></i>${esc((m.name || 'Unnamed').split(' ')[0])}</button>`).join('');
 }
@@ -832,9 +915,10 @@ function buildGroups() {
   const q = search.toLowerCase().trim();
   const vis = S.tasks.filter(t => {
     if (S.ui.hideDone && t.status === 'done') return false;
-    if (S.ui.hidden[memberOf(t) ? t.memberId : '_team']) return false;
+    const ms = membersOf(t);
+    if (ms.length ? ms.every(m => S.ui.hidden[m.id]) : S.ui.hidden._team) return false;
     if (q) {
-      const hay = [t.title, t.category, t.notes, memberOf(t)?.name, STATUS[t.status]].join(' ').toLowerCase();
+      const hay = [t.title, t.category, t.notes, ...ms.map(m => m.name), STATUS[t.status]].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -842,11 +926,11 @@ function buildGroups() {
 
   const G = [];
   if (S.ui.group === 'member') {
-    const team = vis.filter(t => !memberOf(t));
+    const team = vis.filter(t => !membersOf(t).length);
     if (team.length) G.push({key: '_team', header: true, title: 'Team-wide', sub: 'Milestones & shared work', color: TEAM_COLOR, memberId: '', avatar: '★', tasks: team});
     for (const m of S.members) {
       if (S.ui.hidden[m.id]) continue;
-      const ts = vis.filter(t => t.memberId === m.id);
+      const ts = vis.filter(t => t.memberIds.includes(m.id));
       if (q && !ts.length) continue;
       G.push({key: m.id, header: true, title: m.name || 'Unnamed', sub: m.role, color: m.color, memberId: m.id, avatar: initials(m.name), tasks: ts});
     }
@@ -860,9 +944,9 @@ function buildGroups() {
   return G;
 }
 
-function barHTML(t) {
+function barHTML(t, c = colorOf(t)) {
   const a = diff(S.range.start, t.start), b = diff(S.range.start, t.end);
-  const c = colorOf(t), over = isOverdue(t);
+  const over = isOverdue(t);
   const cls = `bar st-${t.status}${over ? ' over' : ''}`;
   if (t.milestone) {
     return `<div class="${cls} ms" data-id="${t.id}" style="left:${a * dw + dw / 2 - 11}px;--c:${c}"><span class="bl">${esc(t.title)}</span></div>`;
@@ -878,18 +962,24 @@ function barHTML(t) {
     `<span class="h l"></span><span class="h r"></span>${over ? '<span class="flag">!</span>' : ''}</div>`;
 }
 
-function taskRow(t) {
-  const m = memberOf(t), over = isOverdue(t);
+function namesList(ms, max = 2) {
+  const n = ms.map(firstName);
+  return n.length > max ? `${n.slice(0, max).join(', ')} +${n.length - max}` : n.join(', ');
+}
+function taskRow(t, g) {
+  const ms = membersOf(t), over = isOverdue(t);
+  const rowM = g?.memberId ? S.members.find(m => m.id === g.memberId) : null, c = colorOf(t, rowM);
   const due = t.milestone ? fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric'}) : `Due ${fmt(t.end)}`;
   const bits = [];
-  if (S.ui.group !== 'member') bits.push(esc(m?.name?.split(' ')[0] || 'Team'));
+  if (S.ui.group !== 'member') bits.push(esc(ms.length ? namesList(ms) : 'Team'));
+  else if (rowM && ms.length > 1) bits.push('with ' + esc(namesList(ms.filter(m => m !== rowM))));
   if (S.ui.group !== 'category' && t.category) bits.push(esc(t.category));
   bits.push(over ? `<span class="red">${due} · ${plural(diff(t.end, TODAY), 'day')} late</span>` : due);
-  return `<div class="row task" style="--c:${colorOf(t)}">
+  return `<div class="row task" style="--c:${c}">
     <div class="label" data-open="${t.id}"><span class="sdot ${t.status}" title="${STATUS[t.status]}"></span>
       <div class="ttext"><div class="tname">${t.milestone ? '◆ ' : ''}${esc(t.title)}</div><div class="tmeta">${bits.join(' · ')}</div></div>
       ${t.priority === 'high' && t.status !== 'done' && !t.milestone ? '<span class="pri" title="High priority">HIGH</span>' : ''}</div>
-    <div class="track" data-member="${esc(t.memberId)}" data-cat="${esc(t.category)}">${barHTML(t)}</div></div>`;
+    <div class="track" data-member="${esc(rowM?.id || '')}" data-cat="${esc(t.category)}">${barHTML(t, c)}</div></div>`;
 }
 
 function groupRow(g) {
@@ -955,11 +1045,13 @@ function renderChart() {
 
   // rows
   const G = buildGroups();
-  let rows = '', count = 0;
+  let rows = '';
+  const seen = new Set();  // shared tasks appear under each assignee but count once
   for (const g of G) {
+    g.tasks.forEach(t => seen.add(t.id));
     if (g.header) rows += groupRow(g);
-    if (g.header && S.ui.collapsed[g.key]) { count += g.tasks.length; continue; }
-    for (const t of g.tasks) { rows += taskRow(t); count++; }
+    if (g.header && S.ui.collapsed[g.key]) continue;
+    for (const t of g.tasks) rows += taskRow(t, g);
     if (g.header && !g.tasks.length) rows += `<div class="row empty-row"><div class="label">No tasks yet — click + or double-click the timeline</div><div class="track" data-member="${esc(g.memberId ?? '')}" data-cat="${esc(g.cat ?? '')}"></div></div>`;
   }
   const isEmpty = !G.length || !rows;
@@ -971,7 +1063,7 @@ function renderChart() {
   canvas.className = 'mode-' + S.ui.group;
   canvas.innerHTML =
     `<div class="head" style="width:${L + W}px">
-      <div class="corner"><span class="ct">${{member: 'Members & tasks', category: 'Subsystems', none: 'All tasks'}[S.ui.group]}</span><span class="cc">${plural(count, 'task')}</span></div>
+      <div class="corner"><span class="ct">${{member: 'Members & tasks', category: 'Subsystems', none: 'All tasks'}[S.ui.group]}</span><span class="cc">${plural(seen.size, 'task')}</span></div>
       <div class="tiers" style="width:${W}px">${months}${minor}${todayIn && !showDays ? `<div class="tpill" style="left:${(tIdx + .5) * dw}px">TODAY</div>` : ''}${compIn ? `<div class="cpill" style="left:${(cIdx + .5) * dw}px">🏆 ${esc(comp.name || 'Competition')}</div>` : ''}</div>
     </div>
     <div class="body${isEmpty ? ' is-empty' : ''}" style="width:${L + W}px">
@@ -993,6 +1085,78 @@ function renderLegend() {
      <span class="lg"><span class="tl"></span>Today</span>
      ${S.competition.date && S.competition.show ? `<span class="lg"><span class="tl" style="background:none;border-left:2px dashed #AF52DE;width:0"></span>${esc(S.competition.name || 'Competition')}</span>` : ''}
      <span class="lg hint">Drag bars to reschedule · drag edges to resize · <kbd>N</kbd> new · <kbd>T</kbd> today · <kbd>1</kbd>–<kbd>4</kbd> zoom · <kbd>S</kbd> screenshot · <kbd>C</kbd> competition</span>`;
+}
+
+/* ---------- My Tasks ---------- */
+const CHECK = '<svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function taskCard(t, me) {
+  const done = t.status === 'done', left = diff(TODAY, t.end);
+  const others = membersOf(t).filter(m => m.id !== me.id);
+  const due = done ? 'Done' : left < 0 ? `${plural(-left, 'day')} late` : left === 0 ? 'Due today' : t.start > TODAY ? `Starts in ${plural(diff(TODAY, t.start), 'day')}` : `${plural(left, 'day')} left`;
+  const cls = done ? 'green' : left < 0 ? 'red' : left <= 3 ? 'orange' : '';
+  const bits = [t.milestone ? fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric'}) : `${fmt(t.start)} – ${fmt(t.end)}`];
+  if (t.category) bits.push(esc(t.category));
+  if (!done) bits.push(STATUS[t.status]);
+  if (t.priority === 'high' && !done) bits.push('<span class="hi">HIGH</span>');
+  if (others.length) bits.push('with ' + esc(others.map(firstName).join(', ')));
+  return `<div class="tcard${done ? ' done' : ''}" data-open="${t.id}" style="--c:${t.category ? catColor(t.category) : me.color}">
+    <button class="ckbtn${done ? ' on' : ''}" data-done="${t.id}" title="${done ? 'Mark as not done' : 'Mark as done'}">${CHECK}</button>
+    <div style="min-width:0"><div class="tt">${t.milestone ? '◆ ' : ''}${esc(t.title)}</div><div class="tm">${bits.join(' · ')}</div>
+      ${!t.milestone && !done && t.progress ? `<div class="tp"><i style="width:${t.progress}%"></i></div>` : ''}
+      ${t.notes ? `<div class="tn">${esc(t.notes)}</div>` : ''}</div>
+    <div class="due ${cls}">${due}</div></div>`;
+}
+function renderMine() {
+  const el = $('#mine');
+  if (S.ui.view !== 'mine') { el.innerHTML = ''; return; }
+  const me = meMember();
+  if (!me) {
+    el.innerHTML = `<div class="mine-wrap"><div class="pick-head"><h2>Who are you?</h2><p>Pick your name to see the tasks assigned to you. This is saved on this device — you can change it anytime.</p></div>
+      ${S.members.length ? `<div class="melist">${S.members.map(m => `<button class="mepick" data-me="${m.id}" style="--c:${m.color}"><span class="avatar">${esc(initials(m.name))}</span><span><b>${esc(m.name || 'Unnamed')}</b><small>${esc(m.role)}</small></span></button>`).join('')}</div>`
+        : '<div class="mempty">No team members yet. Add them with the <b>Team</b> button first.</div>'}
+      <div style="text-align:center"><button class="lnk" data-view="team">Just browsing — show the whole team</button></div></div>`;
+    return;
+  }
+  const mine = S.tasks.filter(t => t.memberIds.includes(me.id)).sort((a, b) => a.end.localeCompare(b.end) || a.start.localeCompare(b.start));
+  const open = mine.filter(t => t.status !== 'done'), done = mine.filter(t => t.status === 'done');
+  const late = open.filter(isOverdue), now = open.filter(t => !isOverdue(t) && t.start <= TODAY), next = open.filter(t => t.start > TODAY);
+  const avg = avgProgress(mine.filter(t => !t.milestone));
+  const soon = open.filter(t => t.end >= TODAY && diff(TODAY, t.end) <= 14).length;
+  const sec = (title, list, extra = '') => list.length ? `<div class="msec"><h3${extra}>${title}<span class="n">${list.length}</span></h3><div class="tlist">${list.map(t => taskCard(t, me)).join('')}</div></div>` : '';
+  const showDone = S.ui.collapsed['mine:done'] === false;
+  el.innerHTML = `<div class="mine-wrap">
+    <div class="me-card" style="--c:${me.color}"><span class="avatar">${esc(initials(me.name))}</span>
+      <div class="gtext"><h2>Hi, ${esc(firstName(me))} 👋</h2><div class="gsub">${me.role ? esc(me.role) + ' · ' : ''}${plural(open.length, 'open task')}</div></div>
+      <button class="btn ghost" data-change-me>Not you? Change</button><button class="btn primary" data-new-mine>+ New Task</button></div>
+    <div class="mstats">${stat('My tasks', `${done.length}<small>/ ${mine.length} done</small>`, me.color)}${stat('Progress', `${avg}<small>%</small>`, '#34C759', `<div class="meter"><i style="width:${avg}%"></i></div>`)}${stat('Overdue', late.length, late.length ? '#FF3B30' : '#8E8E93')}${stat('Due ≤ 14 days', soon, '#FF9500')}${compCard()}</div>
+    ${mine.length ? '' : '<div class="mempty">Nothing assigned to you yet. 🎉<br>Tasks you’re added to will show up here.</div>'}
+    ${sec('Overdue', late, ' class="red"')}${sec('Working on now', now)}${sec('Coming up', next)}
+    ${done.length ? `<div class="msec"><h3>Done<span class="n">${done.length}</span><button data-toggle-done>${showDone ? 'Hide' : 'Show'}</button></h3>${showDone ? `<div class="tlist">${done.map(t => taskCard(t, me)).join('')}</div>` : ''}</div>` : ''}
+  </div>`;
+}
+$('#mine').addEventListener('click', e => {
+  const q = s => e.target.closest(s);
+  if (q('[data-me]')) { S.ui.me = q('[data-me]').dataset.me; save(); render(); return; }
+  if (q('[data-view]')) return setView(q('[data-view]').dataset.view);
+  if (q('[data-change-me]')) { S.ui.me = ''; save(); render(); return; }
+  if (q('[data-new-mine]')) return newTask();
+  if (q('#compCard')) return openComp();
+  if (q('[data-toggle-done]')) { S.ui.collapsed['mine:done'] = S.ui.collapsed['mine:done'] === false; save(); renderMine(); return; }
+  const ck = q('[data-done]');
+  if (ck) {
+    const t = S.tasks.find(x => x.id === ck.dataset.done); if (!t) return;
+    if (t.status === 'done') { t.status = t.progress > 0 && t.progress < 100 ? 'progress' : 'todo'; if (t.progress === 100) t.progress = 90; }
+    else { t.status = 'done'; t.progress = 100; }
+    save(); render(); toast(t.status === 'done' ? `Done: ${t.title} 🎉` : `Reopened “${t.title}”`);
+    return;
+  }
+  const op = q('[data-open]');
+  if (op) openTask(op.dataset.open);
+});
+// First visit on a device: ask who's using it (once the team list is available).
+function maybeAskMe() {
+  if (S.ui.meAsked || meMember() || !S.members.length) return;
+  S.ui.meAsked = true; S.ui.view = 'mine'; save(); render();
 }
 
 /* ---------- theme ---------- */
@@ -1041,7 +1205,13 @@ $('#monthJump').onchange = e => {
   scrollToDate(v, 0);
   $('#monthJump').selectedIndex = 0;
 };
-$('#newTaskBtn').onclick = () => openTask();
+const newTask = () => openTask(null, S.ui.view === 'mine' && meMember() ? {memberIds: [S.ui.me]} : {});
+$('#newTaskBtn').onclick = newTask;
+function setView(v) {
+  S.ui.view = v; save(); render();
+  if (v === 'team') requestAnimationFrame(() => scrollToDate(TODAY, .12, false));
+}
+$('#viewSeg').addEventListener('click', e => { const v = e.target.closest('button')?.dataset.v; if (v) setView(v); });
 $('#subsBtn').onclick = () => openSubs();
 $('#search').addEventListener('input', e => { search = e.target.value; renderChart(); });
 $('#hideDone').onchange = e => { S.ui.hideDone = e.target.checked; save(); renderChart(); };
@@ -1114,12 +1284,12 @@ addEventListener('pointerup', () => {
 
 /* ---------- tooltip ---------- */
 function showTip(t, e) {
-  const m = memberOf(t), len = diff(t.start, t.end) + 1;
+  const ms = membersOf(t), len = diff(t.start, t.end) + 1;
   const left = diff(TODAY, t.end);
   const when = t.status === 'done' ? 'Complete ✓' : left < 0 ? `<span style="color:var(--red)">${plural(-left, 'day')} overdue</span>` : left === 0 ? 'Due today' : `${plural(left, 'day')} left`;
   tip.style.setProperty('--c', colorOf(t));
   tip.innerHTML = `<h4>${t.milestone ? '◆ ' : ''}${esc(t.title)}</h4>
-    <div class="who"><i></i>${esc(m?.name || 'Team-wide')}${m?.role ? ` · ${esc(m.role)}` : ''}</div>
+    <div class="who"><i></i>${ms.length ? esc(ms.map(m => m.name).join(', ')) : 'Team-wide'}${ms.length === 1 && ms[0].role ? ` · ${esc(ms[0].role)}` : ''}</div>
     <dl>${t.milestone ? `<dt>Date</dt><dd>${fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'})}</dd>`
       : `<dt>Start</dt><dd>${fmt(t.start, {weekday: 'short', month: 'short', day: 'numeric'})}</dd><dt>Deadline</dt><dd>${fmt(t.end, {weekday: 'short', month: 'short', day: 'numeric'})}</dd><dt>Duration</dt><dd>${plural(len, 'day')}</dd>`}
       <dt>Status</dt><dd>${STATUS[t.status]}</dd><dt>Timing</dt><dd>${when}</dd>
@@ -1185,12 +1355,13 @@ function openTask(id, preset = {}) {
   editing = t ? t.id : null;
   const defStart = TODAY >= S.range.start && TODAY <= S.range.end ? TODAY : S.range.start;
   const start = preset.start || defStart;
-  const base = t || {title: '', memberId: preset.memberId || '', category: preset.category || '', start, end: preset.end || (addDays(start, 13) > S.range.end ? S.range.end : addDays(start, 13)),
+  const base = t || {title: '', memberIds: preset.memberIds || (preset.memberId ? [preset.memberId] : []), category: preset.category || '', start, end: preset.end || (addDays(start, 13) > S.range.end ? S.range.end : addDays(start, 13)),
     progress: 0, status: 'todo', priority: 'med', milestone: false, notes: ''};
   $('#taskDlgTitle').textContent = t ? 'Edit Task' : 'New Task';
   $('#fTitle').value = base.title;
-  $('#fMember').innerHTML = `<option value="">★ Team-wide</option>` + S.members.map(m => `<option value="${m.id}">${esc(m.name || 'Unnamed')}${m.role ? ' — ' + esc(m.role) : ''}</option>`).join('');
-  $('#fMember').value = S.members.some(m => m.id === base.memberId) ? base.memberId : '';
+  $('#fMembers').innerHTML = S.members.map(m => `<button type="button" class="pick${base.memberIds.includes(m.id) ? ' on' : ''}" data-pick="${m.id}" style="--c:${m.color}" title="${esc(m.role)}"><i></i>${esc(m.name || 'Unnamed')}</button>`).join('')
+    || '<span class="muted" style="font-size:12.5px;font-weight:500">No team members yet — add them with the Team button.</span>';
+  updateWho();
   fillCatSelect(base.category);
   $('#fStart').value = base.start; $('#fEnd').value = base.end;
   for (const f of ['fStart', 'fEnd']) { $('#' + f).min = S.range.start; $('#' + f).max = S.range.end; }
@@ -1203,6 +1374,14 @@ function openTask(id, preset = {}) {
   taskDlg.showModal();
   if (!t) $('#fTitle').focus();
 }
+function updateWho() {
+  const n = document.querySelectorAll('#fMembers .pick.on').length;
+  $('#fWhoHint').textContent = !S.members.length ? '' : n === 0 ? 'Nobody picked = Team-wide' : n === 1 ? '1 person' : `${n} people`;
+}
+$('#fMembers').addEventListener('click', e => {
+  const b = e.target.closest('[data-pick]'); if (!b) return;
+  b.classList.toggle('on'); updateWho();
+});
 $('#taskForm').addEventListener('submit', e => {
   e.preventDefault();
   const ms = $('#fMilestone').checked;
@@ -1212,7 +1391,8 @@ $('#taskForm').addEventListener('submit', e => {
   let status = segVal('fStatus') || 'todo', progress = +$('#fProgress').value;
   if (status === 'done') progress = 100;
   if (progress === 100) status = 'done';
-  const data = {title: $('#fTitle').value.trim() || 'Untitled', memberId: $('#fMember').value, category: $('#fCat').value,
+  const memberIds = [...document.querySelectorAll('#fMembers .pick.on')].map(b => b.dataset.pick);
+  const data = {title: $('#fTitle').value.trim() || 'Untitled', memberIds, category: $('#fCat').value,
     start, end, progress, status, priority: segVal('fPriority') || 'med', milestone: ms, notes: $('#fNotes').value.trim()};
   if (editing) Object.assign(S.tasks.find(x => x.id === editing), data);
   else S.tasks.push({id: uid(), ...data});
@@ -1226,7 +1406,7 @@ $('#fDelete').onclick = () => {
 };
 $('#fDup').onclick = () => {
   const t = S.tasks.find(x => x.id === editing); if (!t) return;
-  const c = {...t, id: uid(), title: t.title + ' (copy)', progress: 0, status: 'todo'};
+  const c = {...t, id: uid(), memberIds: [...t.memberIds], title: t.title + ' (copy)', progress: 0, status: 'todo'};
   S.tasks.push(c); save(); render(); taskDlg.close(); openTask(c.id);
 };
 
@@ -1352,7 +1532,7 @@ function renderMembers() {
       </div>
       <div class="mbtns">
         <div style="display:flex;gap:4px"><button class="tiny" data-move="-1" ${i === 0 ? 'disabled' : ''} title="Move up">↑</button><button class="tiny" data-move="1" ${i === S.members.length - 1 ? 'disabled' : ''} title="Move down">↓</button><button class="tiny del" data-del title="Remove member">✕</button></div>
-        <span class="mcount">${plural(S.tasks.filter(t => t.memberId === m.id).length, 'task')}</span>
+        <span class="mcount">${plural(S.tasks.filter(t => t.memberIds.includes(m.id)).length, 'task')}</span>
       </div>
     </div>`).join('') || '<p class="muted" style="margin:0">No members yet. Add your first teammate below.</p>';
 }
@@ -1371,9 +1551,9 @@ $('#memList').addEventListener('click', e => {
   if (c) m.color = c.dataset.color;
   else if (mv) { const j = i + +mv.dataset.move; [S.members[i], S.members[j]] = [S.members[j], S.members[i]]; }
   else if (e.target.closest('[data-del]')) {
-    const n = S.tasks.filter(t => t.memberId === m.id).length;
-    if (!confirm(`Remove ${m.name || 'this member'}?${n ? `\n\nTheir ${plural(n, 'task')} will move to Team-wide.` : ''}`)) return;
-    S.tasks.forEach(t => { if (t.memberId === m.id) t.memberId = ''; });
+    const n = S.tasks.filter(t => t.memberIds.includes(m.id)).length;
+    if (!confirm(`Remove ${m.name || 'this member'}?${n ? `\n\nThey'll be unassigned from ${plural(n, 'task')}. Tasks with nobody left move to Team-wide.` : ''}`)) return;
+    S.tasks.forEach(t => { t.memberIds = t.memberIds.filter(x => x !== m.id); });
     S.members.splice(i, 1);
   } else return;
   save(); renderMembers(); render();
@@ -1393,9 +1573,23 @@ const setDlg = $('#setDlg');
 $('#settingsBtn').onclick = () => {
   $('#sName').value = S.team.name; $('#sSeason').value = S.team.season;
   $('#sStart').value = S.range.start; $('#sEnd').value = S.range.end;
+  $('#sOnshape').value = S.links.onshape; $('#sNotebook').value = S.links.notebook;
   setSeg('sTheme', S.ui.theme);
   setDlg.showModal();
 };
+for (const [id, k] of [['sOnshape', 'onshape'], ['sNotebook', 'notebook']]) {
+  $('#' + id).onchange = e => {
+    let v = e.target.value.trim();
+    if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
+    if (v && !safeUrl(v)) return toast('That doesn’t look like a web link');
+    S.links[k] = safeUrl(v); e.target.value = S.links[k];
+    save(); renderTop(); toast(v ? 'Link saved' : 'Link removed');
+  };
+}
+$('#links').addEventListener('click', e => {
+  const b = e.target.closest('[data-setlink]'); if (!b) return;
+  $('#settingsBtn').click(); $('#' + b.dataset.setlink).focus();
+});
 $('#sName').oninput = e => { S.team.name = e.target.value; save(); renderTop(); };
 $('#sSeason').oninput = e => { S.team.season = e.target.value; save(); renderTop(); };
 function setRange(start, end) {
@@ -1448,7 +1642,8 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape' && shot) return setShot(false);
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
-  if (k === 'n' && !shot) { e.preventDefault(); openTask(); }
+  if (k === 'n' && !shot) { e.preventDefault(); newTask(); }
+  else if (S.ui.view === 'mine') return;
   else if (k === 't') scrollToDate(TODAY);
   else if (k === 's') setShot(!shot);
   else if (k === 'm' && !shot) openMembers();
@@ -1462,6 +1657,7 @@ $('#sSync').onclick = () => initSync(true);
 
 /* ---------- go ---------- */
 render();
+maybeAskMe();
 initSync(false);
 requestAnimationFrame(() => scrollToDate(TODAY, .12, false));
 })();
