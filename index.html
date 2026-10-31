@@ -1650,7 +1650,9 @@ async function captureChart() {
     const url = await htmlToImage.toPng(b, {
       width: b.scrollWidth, height: b.scrollHeight, pixelRatio: 2,
       backgroundColor: getComputedStyle(b).backgroundColor,
-      filter: n => !(n.id && skip.has(n.id)) && n.tagName !== 'DIALOG',
+      // Skip hidden UI (toolbar icons etc.) and blank out any image the browser won't let us copy.
+      filter: n => !(n instanceof Element) || (!skip.has(n.id) && n.tagName !== 'DIALOG' && getComputedStyle(n).display !== 'none'),
+      imagePlaceholder: 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
     });
     const a = document.createElement('a');
     a.href = url; a.download = `${(S.team.name || 'gantt').replace(/[^\w-]+/g, '-')}-chart-${new Date().toISOString().slice(0, 10)}.png`;
