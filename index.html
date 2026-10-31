@@ -433,7 +433,7 @@ body.mine .nav,body.mine #zoomSeg,body.mine #groupSeg,body.mine .subbar,body.min
     </button>
     <button class="btn" id="subsBtn"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.6"/><rect x="9" y="1" width="6" height="6" rx="1.6" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.6" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.6"/></svg>Subsystems</span></button>
     <button class="icon-btn" id="themeBtn" title="Toggle light / dark"></button>
-    <button class="icon-btn" id="shotBtn" title="Screenshot mode (S)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="4" width="13" height="9.5" rx="2.2"/><path d="M5.5 4l1-1.8h3L10.5 4"/><circle cx="8" cy="8.7" r="2.5"/></svg></button>
+    <button class="icon-btn" id="shotBtn" title="Save full chart as image (S for screenshot mode)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="4" width="13" height="9.5" rx="2.2"/><path d="M5.5 4l1-1.8h3L10.5 4"/><circle cx="8" cy="8.7" r="2.5"/></svg></button>
     <button class="icon-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4" stroke-linecap="round"/></svg></button>
     <button class="btn primary" id="newTaskBtn" title="New task (N)">+ New Task</button>
   </div>
@@ -604,6 +604,7 @@ body.mine .nav,body.mine #zoomSeg,body.mine #groupSeg,body.mine .subbar,body.min
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
 <script>
 (() => {
 'use strict';
@@ -1637,7 +1638,31 @@ function setShot(on) {
   render();
   if (on) { scrollTo(0, 0); toast('Screenshot mode · press Esc to exit'); }
 }
-$('#shotBtn').onclick = () => setShot(true);
+async function captureChart() {
+  if (!window.htmlToImage) { setShot(true); return toast('Image export unavailable · use screenshot mode'); }
+  const btn = $('#shotBtn'); btn.disabled = true;
+  const wasShot = document.body.classList.contains('shot');
+  if (!wasShot) setShot(true);
+  $('#toast').classList.remove('show');
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const b = document.body, skip = new Set(['exitShot', 'tip', 'toast']);
+  try {
+    const url = await htmlToImage.toPng(b, {
+      width: b.scrollWidth, height: b.scrollHeight, pixelRatio: 2,
+      backgroundColor: getComputedStyle(b).backgroundColor,
+      filter: n => !(n.id && skip.has(n.id)) && n.tagName !== 'DIALOG',
+    });
+    const a = document.createElement('a');
+    a.href = url; a.download = `${(S.team.name || 'gantt').replace(/[^\w-]+/g, '-')}-chart-${new Date().toISOString().slice(0, 10)}.png`;
+    a.click();
+    if (!wasShot) setShot(false);
+    toast('Chart image saved');
+  } catch (err) {
+    console.error(err);
+    toast('Couldn’t save image · screenshot mode is on instead');
+  } finally { btn.disabled = false; }
+}
+$('#shotBtn').onclick = captureChart;
 $('#exitShot').onclick = () => setShot(false);
 addEventListener('afterprint', () => document.body.classList.contains('shot') && setShot(false));
 
