@@ -329,6 +329,7 @@ body.shot .bar{cursor:default}
 body.shot .row.task:hover .label,body.shot .row.task:hover .track{background:transparent}
 body.shot #exitShot{display:block;position:fixed;top:12px;right:14px;z-index:300;border:0;border-radius:980px;padding:7px 14px;background:rgba(29,29,31,.85);color:#fff;font-size:12px;font-weight:600;opacity:0;transition:opacity .25s}
 body.shot #exitShot:hover{opacity:1}
+body.capturing{pointer-events:none}
 
 @media print{
   @page{size:landscape;margin:8mm}
@@ -433,7 +434,7 @@ body.mine .nav,body.mine #zoomSeg,body.mine #groupSeg,body.mine .subbar,body.min
     </button>
     <button class="btn" id="subsBtn"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.6"/><rect x="9" y="1" width="6" height="6" rx="1.6" opacity=".55"/><rect x="1" y="9" width="6" height="6" rx="1.6" opacity=".55"/><rect x="9" y="9" width="6" height="6" rx="1.6"/></svg>Subsystems</span></button>
     <button class="icon-btn" id="themeBtn" title="Toggle light / dark"></button>
-    <button class="icon-btn" id="shotBtn" title="Save full chart as image (S for screenshot mode)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="4" width="13" height="9.5" rx="2.2"/><path d="M5.5 4l1-1.8h3L10.5 4"/><circle cx="8" cy="8.7" r="2.5"/></svg></button>
+    <button class="icon-btn" id="shotBtn" title="Save chart as image (S for screenshot mode)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="4" width="13" height="9.5" rx="2.2"/><path d="M5.5 4l1-1.8h3L10.5 4"/><circle cx="8" cy="8.7" r="2.5"/></svg></button>
     <button class="icon-btn" id="settingsBtn" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4" stroke-linecap="round"/></svg></button>
     <button class="btn primary" id="newTaskBtn" title="New task (N)">+ New Task</button>
   </div>
@@ -565,6 +566,23 @@ body.mine .nav,body.mine #zoomSeg,body.mine #groupSeg,body.mine .subbar,body.min
     </div>
   </div>
   <div class="dlg-foot"><span class="spacer"></span><button class="btn primary" data-close>Done</button></div>
+</dialog>
+
+<!-- Save image dialog -->
+<dialog id="picDlg">
+  <div class="dlg-head"><h2>Save chart image</h2><button type="button" class="x" data-close>✕</button></div>
+  <div class="dlg-body">
+    <div class="set-group">
+      <h3>Months to include</h3>
+      <div class="seg wide" id="picPreset"><button data-v="1" type="button">This month</button><button data-v="2" type="button">2 months</button><button data-v="3" type="button">3 months</button><button data-v="all" type="button">Whole season</button></div>
+      <div class="grid2">
+        <label>From<select id="picFrom"></select></label>
+        <label>To<select id="picTo"></select></label>
+      </div>
+      <span class="muted" id="picNote" style="font-size:12px"></span>
+    </div>
+  </div>
+  <div class="dlg-foot"><span class="muted" style="font-size:12px">Press <kbd>S</kbd> for screenshot mode instead.</span><span class="spacer"></span><button type="button" class="btn ghost" data-close>Cancel</button><button type="button" class="btn primary" id="picSave">Save image</button></div>
 </dialog>
 
 <!-- Subsystems dialog -->
@@ -824,6 +842,7 @@ const scroller = $('#scroller'), canvas = $('#canvas'), tip = $('#tip');
 let dw = 16;           // pixels per day
 let search = '';
 let shotPrevZoom = null;
+let shotRange = null;  // months being saved as an image; the real season range is restored afterwards
 const labelW = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label')) || 280;
 
 function computeDW() {
@@ -922,6 +941,7 @@ function buildGroups() {
   const q = search.toLowerCase().trim();
   const vis = S.tasks.filter(t => {
     if (S.ui.hideDone && t.status === 'done') return false;
+    if (shotRange && (t.end < shotRange.start || t.start > shotRange.end)) return false;
     const ms = membersOf(t);
     if (ms.length ? ms.every(m => S.ui.hidden[m.id]) : S.ui.hidden._team) return false;
     if (q) {
@@ -1638,14 +1658,72 @@ function setShot(on) {
   render();
   if (on) { scrollTo(0, 0); toast('Screenshot mode · press Esc to exit'); }
 }
-async function captureChart() {
+const nextMonth = m => { const [y, mo] = m.split('-').map(Number); return mo === 12 ? `${y + 1}-01` : `${y}-${pad(mo + 1)}`; };
+const monthEnd = m => addDays(nextMonth(m) + '-01', -1);
+const monthName = m => fmt(m + '-01', {month: 'long', year: 'numeric'});
+const picDlg = $('#picDlg');
+let picChoice = 'all';
+
+function seasonMonths() {
+  const out = [], last = S.range.end.slice(0, 7);
+  for (let m = S.range.start.slice(0, 7); m <= last; m = nextMonth(m)) out.push(m);
+  return out;
+}
+function picRange() {
+  const from = $('#picFrom').value, to = $('#picTo').value;
+  return {start: from + '-01' < S.range.start ? S.range.start : from + '-01', end: monthEnd(to) > S.range.end ? S.range.end : monthEnd(to)};
+}
+function picUpdate() {
+  const ms = seasonMonths(), from = $('#picFrom').value, to = $('#picTo').value;
+  const n = ms.indexOf(to) - ms.indexOf(from) + 1;
+  for (const b of $('#picPreset').children) b.classList.toggle('on', b.dataset.v === picChoice);
+  const r = picRange();
+  const count = S.tasks.filter(t => t.end >= r.start && t.start <= r.end).length;
+  $('#picNote').textContent = `${plural(n, 'month')} · ${fmtY(r.start)} – ${fmtY(r.end)} · ${plural(count, 'task')}`;
+}
+function picPreset(v) {
+  const ms = seasonMonths(), now = TODAY.slice(0, 7);
+  picChoice = v;
+  if (v === 'all') { $('#picFrom').value = ms[0]; $('#picTo').value = ms.at(-1); }
+  else {
+    const i = Math.max(0, ms.indexOf(now));
+    $('#picFrom').value = ms[i]; $('#picTo').value = ms[Math.min(ms.length - 1, i + +v - 1)];
+  }
+  picUpdate();
+}
+function openPic() {
+  const opts = seasonMonths().map(m => `<option value="${m}">${monthName(m)}</option>`).join('');
+  $('#picFrom').innerHTML = $('#picTo').innerHTML = opts;
+  picPreset(picChoice);
+  picDlg.showModal();
+}
+$('#picPreset').onclick = e => { const b = e.target.closest('button'); if (b) picPreset(b.dataset.v); };
+$('#picFrom').onchange = $('#picTo').onchange = e => {
+  const from = $('#picFrom'), to = $('#picTo');
+  if (to.value < from.value) (e.target === from ? to : from).value = e.target.value;
+  picChoice = null; picUpdate();
+};
+$('#picSave').onclick = () => {
+  const ms = seasonMonths(), whole = $('#picFrom').value === ms[0] && $('#picTo').value === ms.at(-1);
+  const label = whole ? 'season' : $('#picFrom').value === $('#picTo').value ? monthName($('#picFrom').value)
+    : `${monthName($('#picFrom').value)} to ${monthName($('#picTo').value)}`;
+  const r = picRange();
+  picDlg.close();
+  captureChart(whole ? null : r, label);
+};
+
+async function captureChart(range, label = 'season') {
   if (!window.htmlToImage) { setShot(true); return toast('Image export unavailable · use screenshot mode'); }
   const btn = $('#shotBtn'); btn.disabled = true;
-  const wasShot = document.body.classList.contains('shot');
-  if (!wasShot) setShot(true);
+  const b = document.body, wasShot = b.classList.contains('shot'), real = S.range;
+  b.classList.add('capturing');
+  // Show just the chosen months for the capture. Nothing is saved while this is swapped in.
+  if (range) { S.range = range; shotRange = range; }
+  if (!wasShot) setShot(true); else render();
   $('#toast').classList.remove('show');
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const b = document.body, skip = new Set(['exitShot', 'tip', 'toast']);
+  const skip = new Set(['exitShot', 'tip', 'toast']);
+  let ok = false;
   try {
     const url = await htmlToImage.toPng(b, {
       width: b.scrollWidth, height: b.scrollHeight, pixelRatio: 2,
@@ -1655,22 +1733,26 @@ async function captureChart() {
       imagePlaceholder: 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
     });
     const a = document.createElement('a');
-    a.href = url; a.download = `${(S.team.name || 'gantt').replace(/[^\w-]+/g, '-')}-chart-${new Date().toISOString().slice(0, 10)}.png`;
+    a.href = url; a.download = `${S.team.name || 'gantt'} chart ${label}`.replace(/[^\w-]+/g, '-') + '.png';
     a.click();
-    if (!wasShot) setShot(false);
-    toast('Chart image saved');
+    ok = true;
   } catch (err) {
     console.error(err);
-    toast('Couldn’t save image · screenshot mode is on instead');
-  } finally { btn.disabled = false; }
+  } finally {
+    if (range) { if (S.range === range) S.range = real; shotRange = null; }
+    b.classList.remove('capturing');
+    if (!wasShot) setShot(false); else render();
+    btn.disabled = false;
+    toast(ok ? 'Chart image saved' : 'Couldn’t save image · press S for screenshot mode');
+  }
 }
-$('#shotBtn').onclick = captureChart;
+$('#shotBtn').onclick = openPic;
 $('#exitShot').onclick = () => setShot(false);
 addEventListener('afterprint', () => document.body.classList.contains('shot') && setShot(false));
 
 /* ---------- keyboard ---------- */
 addEventListener('keydown', e => {
-  if (document.querySelector('dialog[open]')) return;
+  if (document.querySelector('dialog[open]') || document.body.classList.contains('capturing')) return;
   const shot = document.body.classList.contains('shot');
   if (e.key === 'Escape' && shot) return setShot(false);
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
